@@ -1,7 +1,7 @@
 {
   "name": "broadcast-events.js",
   "version": "1.0.0",
-  "description": "Simple, automatic broadcasting `CustomEvent` across iframes.",
+  "description": "Simple, automatic firing of JavaScript events across iframes.",
   "main": "index.js",
   "scripts": {
     "test": "node_modules/.bin/jasmine tests/**/*-spec.js --reporter=jasmine-console-reporter",
