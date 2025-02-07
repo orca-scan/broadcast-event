@@ -1,0 +1,148 @@
+{
+  "name": "broadcast-events.js",
+  "version": "1.0.0",
+  "description": "Simple, automatic broadcasting `CustomEvent` across iframes.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node_modules/.bin/jasmine tests/**/*-spec.js --reporter=jasmine-console-reporter",
+    "build": "node_modules/gulp/bin/gulp.js build",
+    "clean": "node_modules/gulp/bin/gulp.js clean"
+  },
+  "author": "John Doherty <john@orcascan.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orca-scan/broadcast-events.js.git"
+  },
+  "devDependencies": {
+    "del": "2.2.2",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.2.0",
+    "gulp4-run-sequence": "^1.0.0",
+    "gulp": "^4.0.2",
+    "gulp-minify": "^3.1.0",
+    "gulp-sizereport": "^1.2.1",
+    "gulp-string-replace": "^1.1.2",
+    "is-my-json-valid": "^2.20.5",
+    "jasmine": "^3.6.4",
+    "jasmine-console-reporter": "^3.1.0"
+  },
+  "eslintConfig": {
+    "extends": "airbnb-base",
+    "env": {
+      "es6": false,
+      "jasmine": true,
+      "node": true,
+      "browser": false
+    },
+    "globals": {
+      "jasmine": true,
+      "Promise": true,
+      "navigator": true,
+      "window": true,
+      "URN": true
+    },
+    "rules": {
+      "brace-style": [
+        "error",
+        "stroustrup"
+      ],
+      "comma-dangle": [
+        "error",
+        "never"
+      ],
+      "func-names": 0,
+      "indent": [
+        "error",
+        4,
+        {
+          "SwitchCase": 1
+        }
+      ],
+      "max-len": [
+        2,
+        180,
+        4,
+        {
+          "ignoreUrls": true,
+          "ignoreComments": false
+        }
+      ],
+      "new-cap": [
+        "error",
+        {
+          "capIsNewExceptions": [
+            "Router",
+            "ObjectId",
+            "DEBUG"
+          ],
+          "properties": false
+        }
+      ],
+      "no-underscore-dangle": 0,
+      "no-unused-vars": [
+        "warn"
+      ],
+      "no-use-before-define": [
+        "error",
+        {
+          "functions": false
+        }
+      ],
+      "no-var": [
+        "off"
+      ],
+      "one-var": [
+        "off"
+      ],
+      "vars-on-top": [
+        "off"
+      ],
+      "no-param-reassign": [
+        "off"
+      ],
+      "no-lone-blocks": [
+        "off"
+      ],
+      "padded-blocks": 0,
+      "prefer-template": [
+        "off"
+      ],
+      "prefer-arrow-callback": [
+        "off"
+      ],
+      "default-case": [
+        "off"
+      ],
+      "wrap-iife": [
+        2,
+        "inside"
+      ],
+      "no-plusplus": [
+        "off"
+      ],
+      "require-jsdoc": [
+        "warn",
+        {
+          "require": {
+            "FunctionDeclaration": true,
+            "MethodDefinition": true,
+            "ClassDeclaration": true
+          }
+        }
+      ],
+      "object-shorthand": [
+        "error",
+        "never"
+      ],
+      "space-before-function-paren": "off",
+      "strict": "off",
+      "valid-jsdoc": [
+        "error"
+      ]
+    }
+  },
+  "dependencies": {
+    "orca-variables": "git+ssh://git@github.com/orca-scan/orca-variables.git"
+  }
+}
