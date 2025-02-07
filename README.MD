@@ -8,10 +8,10 @@ Orca uses `CustomEvent` to fire app lifecycle events such as `app-ready`, `app-u
 
 ## How?
 
-This script intercepts all calls to `dispatchEvent` and, if the event meets the following criteria, fires the same event in all iframes:
+This script intercepts all calls to [dispatchEvent](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent) and, if the event meets the following criteria, fires the same event in all iframes:
 * Must have namespaced event name e.g. `user:authed`
 * Must be fired on the `window` object _(everything else ignored)_
-* Must be a `CustomEvent` _(dom events are ignored)_
+* Must be a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent) _(dom events are ignored)_
 
 For this to work [broadcast-events.min.js](dist/broadcast-events.min.js) must be added to each page _(parent and iframes)_:
 
