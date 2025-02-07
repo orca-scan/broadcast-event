@@ -1,6 +1,6 @@
 # broadcast-events.js
 
-Simple, automatic broadcasting `CustomEvent` across iframes.
+Simple, automatic firing of JavaScript events across iframes.
 
 ## Why?
 
@@ -13,11 +13,15 @@ This script intercepts all calls to `dispatchEvent` and, if the event meets the 
 * Must be fired on the `window` object _(everything else ignored)_
 * Must be a `CustomEvent` _(dom events are ignored)_
 
-Example:
+For this to work [broadcast-events.min.js](dist/broadcast-events.min.js) must be added to each page _(parent and iframes)_:
+
+```html
+<script src="broadcast-events.min.js"></script>
+```
+
+### How to fire a cross frame event
 
 ```js
 // auto broadcast to all frames
 window.dispatchEvent(new CustomEvent('user:authed', { user: 'john@orcascan.com' }));
 ```
-
-
