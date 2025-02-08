@@ -4,28 +4,35 @@
   "description": "A simple way to broadcast JavaScript events across iframes",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/.bin/jasmine tests/**/*-spec.js --reporter=jasmine-console-reporter",
+    "test": "NODE_ENV=test node_modules/.bin/jasmine --config=tests/jasmine/config.json",
     "build": "node_modules/gulp/bin/gulp.js build",
     "clean": "node_modules/gulp/bin/gulp.js clean"
   },
-  "author": "John Doherty <john@orcascan.com>",
+  "author": "Orca Scan <hello@orcascan.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/orca-scan/broadcast-events.git"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": "16.20.1",
+    "npm": "8.19.4"
   },
   "devDependencies": {
     "del": "2.2.2",
     "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.2.0",
     "eslint-plugin-import": "^2.2.0",
-    "gulp4-run-sequence": "^1.0.0",
     "gulp": "^4.0.2",
     "gulp-minify": "^3.1.0",
     "gulp-sizereport": "^1.2.1",
     "gulp-string-replace": "^1.1.2",
+    "gulp4-run-sequence": "^1.0.0",
     "is-my-json-valid": "^2.20.5",
-    "jasmine": "^3.6.4",
-    "jasmine-console-reporter": "^3.1.0"
+    "jasmine": "^5.0.0",
+    "jasmine-console-reporter": "^3.1.0",
+    "jasmine-xml-reporter": "^1.2.1",
+    "puppeteer": "^24.2.0"
   },
   "eslintConfig": {
     "extends": "airbnb-base",
