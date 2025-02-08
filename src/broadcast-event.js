@@ -1,6 +1,6 @@
 /* eslint-disable prefer-spread */
 /*!
-/* broadcast-event.js - v@version@
+/* broadcast-events.js - v@version@
  * Automatically broadcasts CustomEvent to all iframes
  */
 (function (window) {
@@ -11,10 +11,9 @@
     if (typeof window.CustomEvent !== 'function') throw new Error('missing CustomEvent polyfill');
     if (typeof window.EventTarget !== 'function') throw new Error('missing EventTarget polyfill');
 
-    var host = window.location.host;
     var sender = window.location.href;
-    var debug = true; // uncomment to console log sequence
     var eventIdCache = [];
+    var debugging = true; // uncomment to console log sequence
 
     /**
      * to avoid rebroadcast loops, we give every event a unique id and hold a copy of that id in memory
@@ -28,39 +27,43 @@
      * @example
      *  broadcastEvent('mobile:ready', { token: '01234', email: 'john@orcascan.com' });
      * @param {string} eventName - event to dispatch
-     * @param {object} eventData - data to send with the event
-     * TODO: add debug as a parm
-     * @returns {boolean} true if the event was dispatched successfully
+     * @param {object} [eventData] - data to send with the event
+     * @param {boolean} [debug] - console log flow if true (default false)
+     * @returns {void}
      */
-    function broadcastEvent(eventName, eventData) {
+    function broadcastEvent(eventName, eventData, debug) {
 
         eventName = String(eventName || '') || '';
+        eventData = eventData || {};
+        debugging = (debug === true);
 
         if (eventName.indexOf(':') === -1) throw new Error('eventName must be namespaced with :');
 
+        // exit if we already sent this
+        if (alreadyBroadcast(eventData)) return;
+
         var data = {
             type: eventName,
-            detail: eventData || {},
+            detail: eventData,
             sender: sender,
             timestamp: Date.now()
         };
 
         // dispatch locally
-        var eventResult = window.dispatchEvent(new CustomEvent(eventName, eventData));
+        log('fired:', data);
+        window.dispatchEvent(new CustomEvent(eventName, eventData));
 
+        // send to other frames
         if (window.top !== window) {
-            sendMessage(window.top, { broadcastEventData: data }, '*');
+            // we're in an iframe, send to parent
+            sendEvent(window.top, data);
         }
         else {
-            // Send event to all child frames, including forwarding from parent
+            // we're topmost page, send to all child frames
             for (var i = 0, l = window.frames.length; i < l; i++) {
-                if (window.frames[i] !== window) { // Prevent sending to self
-                    sendMessage(window.frames[i], { broadcastEventData: data }, '*');
-                }
+                sendEvent(window.frames[i], data);
             }
         }
-
-        return eventResult;
     };
 
     /**
@@ -68,58 +71,63 @@
      * @returns {void}
      */
     function log() {
-        if (debug) {
+        if (debugging) {
             var params = ['broadcast-event[' + sender + ']'].concat([].slice.call(arguments));
             console.log.apply(console, params);
         }
     }
 
     /**
-     * Send event via post message
+     * Checks if this event has already been broadcast by us
+     * @param {object} eventData - event data
+     * @returns {boolean} true if we've already send this, otherwise false
+     */
+    function alreadyBroadcast(eventData) {
+
+        if (!eventData) throw new Error('Invalid payload param');
+
+        var eventIds = eventData.eventIds || [];
+        
+        // check if this event id was issued by us
+        var matchFound = eventIdCache.some(function(guid) {
+            return eventIds.indexOf(guid) !== -1;
+        });
+
+        return matchFound;
+    }
+
+    /**
+     * Send an event to another window using postMessage
      * @param {Window} targetWindow - window to send message to
      * @param {object} payload - data to send
      * @returns {void}
      */
-    function sendMessage(targetWindow, payload) {
+    function sendEvent(targetWindow, payload) {
 
-        if (targetWindow === window) return; // Prevent sending to self
+        // dont send to self
+        if (targetWindow === window) return;
 
-        var eventIds = [];
-
-        // extract existing event IDs from payload
-        if (payload.broadcastEventData && payload.broadcastEventData.detail && Array.isArray(payload.broadcastEventData.detail.eventIds)){
-            eventIds = payload.broadcastEventData.detail.eventIds;
-        }
-
-        // check if the event was already broadcast
-        var alreadyBroadcast = eventIdCache.some(function(guid) {
-            return eventIds.indexOf(guid) !== -1;
-        });
-        if (alreadyBroadcast) return;
-
+        // exit if we already sent this
+        if (alreadyBroadcast(payload.detail)) return;
+    
         // generate a unique event ID to prevent rebroadcast loops
-        var eventId = stringHash(host + ':' + payload.broadcastEventData.type + ':' + performance.now() + ':' + Math.random());
-
-        // ensure payload structure is initialized
-        if (!payload) payload = {};
-        if (!payload.broadcastEventData) payload.broadcastEventData = {};
-        if (!payload.broadcastEventData.detail) payload.broadcastEventData.detail = {};
-        if (!payload.broadcastEventData.detail.eventIds) payload.broadcastEventData.detail.eventIds = [];
+        var eventId = stringHash(sender + ':' + payload.type + ':' + performance.now() + ':' + Math.random());
         
-        // add new event ID
-        payload.broadcastEventData.detail.eventIds.push(eventId);
+        // add new event ID (ensures if we see this event again, we dont rebroadcast)
+        payload.detail.eventIds = payload.detail.eventIds || [];
+        payload.detail.eventIds.push(eventId);
 
-        // store this event ID so we can check for future broadcasts
+        // store this event ID in cache
         eventIdCache.push(eventId);
     
         // dont let event cache grow beyond 500 items
-        if (eventIdCache.length > 500) {
-            eventIdCache.splice(0, eventIdCache.length - 500);
+        if (eventIdCache.length > 1000) {
+            eventIdCache.splice(0, eventIdCache.length - 1000);
         }
-        
+
         try {
             log('sent:', payload);
-            targetWindow.postMessage(payload, '*');
+            targetWindow.postMessage({ _broadcast: payload }, '*');
         }
         catch (e) {
             // Ignore cross-origin frame errors
@@ -148,14 +156,14 @@
      */
     window.addEventListener('message', function(event) {
 
-        var broadcastEventData = event.data && event.data.broadcastEventData;
+        var _broadcast = event.data && event.data._broadcast;
 
-        if (broadcastEventData && typeof broadcastEventData.type === 'string' && broadcastEventData.detail) {
+        if (_broadcast && typeof _broadcast.type === 'string' && _broadcast.detail) {
 
-            log('received:', broadcastEventData);
+            log('received:', _broadcast);
 
-            // dispatch the broadcasted event locally
-            window.dispatchEvent(new CustomEvent(broadcastEventData.type, { detail: broadcastEventData.detail }));
+            // share with other frames
+            broadcastEvent(_broadcast.type, _broadcast.detail);
         }
     });
 
