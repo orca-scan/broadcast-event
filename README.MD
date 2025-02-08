@@ -22,7 +22,7 @@ A simple way to fire JavaScript events across iframes.
 
 ## Star the repo
 
-Find this useful? Helps us priorities open source tasks by staring the repo 🌟
+Find this useful? Star the repo to help us priorities open source tasks 🌟
 
 ## License
 
