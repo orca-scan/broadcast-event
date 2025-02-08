@@ -26,7 +26,7 @@ Find this useful? Star the repo - it helps us priorities open source tasks.
 
 ## License
 
-🛠️ Open-source [MIT License](LICENSE) © [Orca Scan](https://orcascan.com), free to use/modify/distribute with attribution.
+🛠️ Open-source [MIT License](LICENSE) © [Orca Scan](https://orcascan.com) - free to use/modify/distribute with attribution.
 
 👨‍💻 Built by [Orca Scan](https://orcascan.com) - a barcode system compatible with any device.
 
