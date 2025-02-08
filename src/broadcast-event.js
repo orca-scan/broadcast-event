@@ -1,6 +1,6 @@
 /*!
-/* broadcast-events.js - v@version@
- * @description Automatically broadcasts CustomEvent to all iframes
+ * broadcast-events.js v1.0.0
+ * @description A simple way to broadcast JavaScript events across iframes.
  * @see {@link https://github.com/orca-scan/broadcast-event}
  * @author Orca Scan <orcascan.com>
  * @license MIT

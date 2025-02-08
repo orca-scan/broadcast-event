@@ -1,7 +1,7 @@
 {
   "name": "broadcast-event",
   "version": "1.0.0",
-  "description": "A simple way to fire JavaScript events across iframes.",
+  "description": "A simple way to broadcast JavaScript events across iframes",
   "main": "index.js",
   "scripts": {
     "test": "node_modules/.bin/jasmine tests/**/*-spec.js --reporter=jasmine-console-reporter",

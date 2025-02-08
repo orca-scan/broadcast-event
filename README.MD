@@ -1,6 +1,6 @@
 # broadcast-event
 
-A simple way to fire JavaScript events across iframes.
+A simple way to broadcast JavaScript events across iframes.
 
 ## Why?
 
