@@ -18,4 +18,4 @@ A simple way to fire JavaScript events across iframes.
 
 🕵️ Need more? Our [developer APIs](https://orcascan.com/guides?tag=for-developers) make it easy to integrate barcode tracking.
 
-🛠️ Open-source under [MIT License](LICENSE) – © [Orca Scan](https://orcascan.com) _(free to use, modify with attribution)_.
+🛠️ Open-source [MIT License](LICENSE) – © [Orca Scan](https://orcascan.com) _(free to use, modify with attribution)_.
