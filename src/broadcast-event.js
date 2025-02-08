@@ -1,7 +1,9 @@
-/* eslint-disable prefer-spread */
 /*!
 /* broadcast-events.js - v@version@
- * Automatically broadcasts CustomEvent to all iframes
+ * @description Automatically broadcasts CustomEvent to all iframes
+ * @see {@link https://github.com/orca-scan/broadcast-event}
+ * @author Orca Scan <orcascan.com>
+ * @license MIT
  */
 (function (window) {
 
