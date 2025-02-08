@@ -12,7 +12,19 @@ A simple way to fire JavaScript events across iframes.
 
 [Orca Scan](https://orcascan.com) uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) to fire app lifecycle events such as `app-ready` in our apps. Trouble is, this only works in the current page - if you have an iframe, the JS in that iframe never sees the event.
 
-## For Developers
+## Contributing
+
+1. Fork it!
+2. Create your feature branch: `git checkout -b my-new-feature`
+3. Commit your changes: `git commit -m 'Add some feature'`
+4. Push to the branch: `git push origin my-new-feature`
+5. Submit a pull request
+
+## Star the repo
+
+If you find this useful star the repo, it helps us priorities open source fixes.
+
+## License
 
 👨‍💻 Built by [Orca Scan](https://orcascan.com) - a barcode system compatible with any device.
 
