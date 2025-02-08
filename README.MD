@@ -4,8 +4,8 @@ A simple way to fire JavaScript events across iframes.
 
 ## How?
 
-1. Add [broadcast-events.min.js](dist/broadcast-events.min.js) in parent and iframe page
-2. Fire and event using `broadcastEvent('my:custom:event', { name: 'some JSON data' });`
+1. Add [broadcast-event.min.js](dist/broadcast-event.min.js) to parent and iframe page
+2. Fire an event using `broadcastEvent('my:custom:event', { name: 'my JSON data' });`
 3. Listen in any frame using `window.addEventListener('my:custom:event', function(e) {})`
 
 ## Why?
