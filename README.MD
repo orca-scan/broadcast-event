@@ -24,7 +24,7 @@ We Open Source code we think might help others, if you'd like to assist:
 
 ## Star the repo
 
-Find this useful? Star the repo to help us priorities open source tasks 🌟
+Find this useful? Star the repo - it help us priorities open source tasks 🌟
 
 ## License
 
