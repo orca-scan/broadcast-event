@@ -14,7 +14,7 @@ A simple way to fire JavaScript events across iframes.
 
 ## For Developers
 
-👨‍💻 Built by [Orca Scan](https://orcascan.com) – a barcode system compatible with any device.
+👨‍💻 Built by [Orca Scan](https://orcascan.com) - a barcode system compatible with any device.
 
 🕵️ Need more? Our [developer APIs](https://orcascan.com/guides?tag=for-developers) make it easy to integrate barcode tracking.
 
