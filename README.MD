@@ -26,4 +26,4 @@ Find this useful? Helps us priorities open source tasks by staring the repo 🌟
 
 ## License
 
-[MIT License](LICENSE) © Orca Scan, a [barcode app that works with any device](https://orcascan.com) with simple [APIs](https://orcascan.com/guides?tag=for-developers) to add barcode tracking to any system.
+[MIT License](LICENSE) © Orca Scan - a [barcode app](https://orcascan.com) with simple [APIs](https://orcascan.com/guides?tag=for-developers) for barcode tracking.
