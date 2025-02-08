@@ -49,9 +49,6 @@
         // dispatch locally
         window.dispatchEvent(new CustomEvent(eventName, eventData));
 
-        // it sometimes sends twice
-        // problem is, if another scripts injects a frame, we send data to it :o
-
         // we're in an iframe, send to parent
         if (window.top !== window) {
             sendEvent(window.top, data);
