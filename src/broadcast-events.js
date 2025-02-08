@@ -1,18 +1,19 @@
 /* eslint-disable prefer-spread */
 /*!
-/* broadcast-events.js - v@version@
+/* broadcast-event.js - v@version@
  * Automatically broadcasts CustomEvent to all iframes
  */
-(function () {
+(function (window) {
 
-    // Dependency check!
+    'use strict';
+
+    // dependency check!
     if (typeof window.CustomEvent !== 'function') throw new Error('missing CustomEvent polyfill');
     if (typeof window.EventTarget !== 'function') throw new Error('missing EventTarget polyfill');
 
-    var originalDispatchEvent = EventTarget.prototype.dispatchEvent;
     var host = window.location.host;
+    var sender = window.location.href;
     var debug = true; // uncomment to console log sequence
-    var originId = window.location.href + '_' + stringHash(window.location.href + ':' + performance.now() + ':' + Math.random());
     var eventIdCache = [];
 
     /**
@@ -23,43 +24,39 @@
      */
 
     /**
-     * Broadcast CustomEvent with ':' in the event name across frames
+     * Fire events across iframes
      * @example
-     *  window.dispatchEvent(new CustomEvent('mobile:ready', { token: '', email: 'john' }));
-     * @param {Event} event - event to dispatch
+     *  broadcastEvent('mobile:ready', { token: '01234', email: 'john@orcascan.com' });
+     * @param {string} eventName - event to dispatch
+     * @param {object} eventData - data to send with the event
+     * TODO: add debug as a parm
      * @returns {boolean} true if the event was dispatched successfully
      */
-    EventTarget.prototype.dispatchEvent = function (event) {
+    function broadcastEvent(eventName, eventData) {
 
-        var isCustomEvent = (event instanceof CustomEvent && 'detail' in event);
-        var isNamespacedEvent = String(event.type || '').includes(':');
-        var isWindowEvent = (this === window);
+        eventName = String(eventName || '') || '';
 
-        // not a broadcastable event, dispatch locally as normal
-        if (!(isCustomEvent && isNamespacedEvent && isWindowEvent)) {
-            return originalDispatchEvent.call(this, event);
-        }
+        if (eventName.indexOf(':') === -1) throw new Error('eventName must be namespaced with :');
 
-        var source = window.location.href;
         var data = {
-            type: event.type,
-            detail: event.detail,
-            host: host,
-            source: source,
-            originId: originId,
+            type: eventName,
+            detail: eventData || {},
+            sender: sender,
             timestamp: Date.now()
         };
 
         // dispatch locally
-        var eventResult = originalDispatchEvent.call(this, event);
+        var eventResult = window.dispatchEvent(new CustomEvent(eventName, eventData));
 
-        if (window.top !== this) {
-            sendMessage(window.top, { broadcastEvent: data }, '*');
+        if (window.top !== window) {
+            sendMessage(window.top, { broadcastEventData: data }, '*');
         }
         else {
-            // send event to all child frames
+            // Send event to all child frames, including forwarding from parent
             for (var i = 0, l = window.frames.length; i < l; i++) {
-                sendMessage(window.frames[i], { broadcastEvent: data }, '*');
+                if (window.frames[i] !== window) { // Prevent sending to self
+                    sendMessage(window.frames[i], { broadcastEventData: data }, '*');
+                }
             }
         }
 
@@ -72,47 +69,60 @@
      */
     function log() {
         if (debug) {
-            var params = ['broadcast-event[' + host + ']'].concat([].slice.call(arguments));
+            var params = ['broadcast-event[' + sender + ']'].concat([].slice.call(arguments));
             console.log.apply(console, params);
         }
     }
 
     /**
-     * Post message to a window
+     * Send event via post message
      * @param {Window} targetWindow - window to send message to
      * @param {object} payload - data to send
      * @returns {void}
      */
     function sendMessage(targetWindow, payload) {
 
-        // do not send to self
-        if (targetWindow === window) return;
-    
-        // see if we have already sent this previoulsey (resending causes an event loop)
-        var alreadyBroadcast = eventIdCache.some(function(guid) {
-            return eventIdIndex = (payload?.broadcastEvent?.detail?.eventIds || []).indexOf(guid) !== -1;
-        });
+        if (targetWindow === window) return; // Prevent sending to self
 
+        var eventIds = [];
+
+        // extract existing event IDs from payload
+        if (payload.broadcastEventData && payload.broadcastEventData.detail && Array.isArray(payload.broadcastEventData.detail.eventIds)){
+            eventIds = payload.broadcastEventData.detail.eventIds;
+        }
+
+        // check if the event was already broadcast
+        var alreadyBroadcast = eventIdCache.some(function(guid) {
+            return eventIds.indexOf(guid) !== -1;
+        });
         if (alreadyBroadcast) return;
 
-        // this uniquley identifies the event so we can prevent it been rebroadcast
-        var eventId = stringHash(host + ':' + payload.type + ':' + performance.now() + ':' + Math.random());
+        // generate a unique event ID to prevent rebroadcast loops
+        var eventId = stringHash(host + ':' + payload.broadcastEventData.type + ':' + performance.now() + ':' + Math.random());
 
-        // event.detail might not be an object
-        payload.broadcastEvent.detail = payload?.broadcastEvent?.detail || {};
-        payload.broadcastEvent.detail.eventIds = payload?.broadcastEvent?.detail?.eventIds || [];
-        payload.broadcastEvent.detail.eventIds.push(eventId);
+        // ensure payload structure is initialized
+        if (!payload) payload = {};
+        if (!payload.broadcastEventData) payload.broadcastEventData = {};
+        if (!payload.broadcastEventData.detail) payload.broadcastEventData.detail = {};
+        if (!payload.broadcastEventData.detail.eventIds) payload.broadcastEventData.detail.eventIds = [];
+        
+        // add new event ID
+        payload.broadcastEventData.detail.eventIds.push(eventId);
 
+        // store this event ID so we can check for future broadcasts
         eventIdCache.push(eventId);
-
-        // TODO: clear cache of ids to avoid memory leak
-
+    
+        // dont let event cache grow beyond 500 items
+        if (eventIdCache.length > 500) {
+            eventIdCache.splice(0, eventIdCache.length - 500);
+        }
+        
         try {
             log('sent:', payload);
             targetWindow.postMessage(payload, '*');
         }
         catch (e) {
-            // ignore cross-origin frame errors
+            // Ignore cross-origin frame errors
         }
     }
 
@@ -136,23 +146,25 @@
      * @param {MessageEvent} event - received postMessage event
      * @returns {void}
      */
-    function handleMessage(event) {
+    window.addEventListener('message', function(event) {
 
-        // prevent rebroadcasting the same event to the originating frame
-        if (event.source === window) return;
+        var broadcastEventData = event.data && event.data.broadcastEventData;
 
-        var broadcastEvent = event.data && event.data.broadcastEvent;
+        if (broadcastEventData && typeof broadcastEventData.type === 'string' && broadcastEventData.detail) {
 
-        if (broadcastEvent && typeof broadcastEvent.type === 'string') {
-
-            log('received:', broadcastEvent);
+            log('received:', broadcastEventData);
 
             // dispatch the broadcasted event locally
-            window.dispatchEvent(new CustomEvent(broadcastEvent.type, { detail: broadcastEvent.detail }));
+            window.dispatchEvent(new CustomEvent(broadcastEventData.type, { detail: broadcastEventData.detail }));
         }
+    });
+
+    // export
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = broadcastEvent;
+    }
+    else {
+        window.broadcastEvent = broadcastEvent;
     }
 
-    // listen for events from other frames
-    window.addEventListener('message', handleMessage);
-
-})();
+})(this);
