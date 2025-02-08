@@ -30,4 +30,4 @@ Find this useful? Star the repo - it helps us priorities open source tasks.
 
 👨‍💻 Built by [Orca Scan](https://orcascan.com) - a barcode system compatible with any device.
 
-🕵️ Need more? Our [developer APIs](https://orcascan.com/guides?tag=for-developers) make it easy to integrate barcode tracking.
+🕵️ Our [developer APIs](https://orcascan.com/guides?tag=for-developers) make it easy to add barcode tracking to any system.
