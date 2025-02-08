@@ -14,6 +14,8 @@ A simple way to fire JavaScript events across iframes.
 
 ## Contribute
 
+We Open Source code we think might help others, if you'd like to assist:
+
 1. Fork it!
 2. Create your feature branch: `git checkout -b my-new-feature`
 3. Commit your changes: `git commit -m 'Add some feature'`
