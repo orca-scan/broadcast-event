@@ -1,4 +1,4 @@
-# broadcast-event.js
+# broadcast-event
 
 A simple way to fire JavaScript events across iframes.
 
