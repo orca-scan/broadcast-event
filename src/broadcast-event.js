@@ -16,25 +16,16 @@
     var debugging = true; // uncomment to console log sequence
 
     /**
-     * to avoid rebroadcast loops, we give every event a unique id and hold a copy of that id in memory
-     * when broadcasting an event, we check if we have the event id (are we the source?)
-     * if so, we do not send it otherwise we get stuck in an event loop
-     * the problem is, when do we know the id held in memory is obsolite and can be cleaned up?
-     */
-
-    /**
      * Fire events across iframes
      * @example
      *  broadcastEvent('mobile:ready', { token: '01234', email: 'john@orcascan.com' });
      * @param {string} eventName - event to dispatch
      * @param {object} [eventData] - data to send with the event
-     * @param {boolean} [debug] - console log flow if true (default false)
      * @returns {void}
      */
     function broadcastEvent(eventName, eventData, eventOriginId) {
 
         eventName = String(eventName || '') || '';
-        // debugging = (debug === true);
 
         if (eventName.indexOf(':') === -1) throw new Error('eventName must be namespaced with :');
 
