@@ -12,7 +12,7 @@ A simple way to fire JavaScript events across iframes.
 2. Fire an event using `broadcastEvent('my:event', { name: 'my JSON data' });`
 3. Listen everywhere `window.addEventListener('my:event', function(e) { /* go wild */ })`
 
-## Contributing
+## Contribute
 
 1. Fork it!
 2. Create your feature branch: `git checkout -b my-new-feature`
