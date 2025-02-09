@@ -11,11 +11,11 @@
 
     // dependency check!
     if (typeof window.CustomEvent !== 'function') throw new Error('missing CustomEvent polyfill');
-    if (typeof window.EventTarget !== 'function') throw new Error('missing EventTarget polyfill');
 
     var sender = window.location.href;
     var originId = stringHash(sender + ':' + performance.now() + ':' + Math.random());
     var debugging = true; // uncomment to console log sequence
+    var recentEvents = [];
 
     /**
      * Fire events across iframes
@@ -25,39 +25,50 @@
      * @param {object} [eventData] - data to send with the event
      * @returns {void}
      */
-    function broadcastEvent(eventName, eventData, eventOriginId) {
+    function broadcastEvent(eventName, eventData, eventOriginId, eventIds) {
 
         eventName = String(eventName || '') || '';
 
         if (eventName.indexOf(':') === -1) throw new Error('eventName must be namespaced with :');
 
-        // dont rebroadcast our own events
-        if (eventOriginId === originId) {
-            log('suppressed:', eventName);
-            return;
-        }
-
         var data = {
             originId: eventOriginId || originId,
             type: eventName,
             detail: eventData,
-            eventId: stringHash(eventName + ':' + performance.now() + ':' + Math.random())
+            eventIds: eventIds || []
         };
 
-        log('fired:', data);
+        // see if we have already sent this previoulsey (resending causes an event loop)
+        var alreadyBroadcast = recentEvents.some(function(guid) {
+            return ((data.eventIds || []).indexOf(guid) !== -1);
+        });
+
+        if (alreadyBroadcast) {
+            log('suppressed: ', window.location.href);
+            return;
+        }
+
+        // this uniquley identifies the event so we can prevent it been rebroadcast
+        var eventId = stringHash(sender + ':' + data.type + ':' + performance.now() + ':' + Math.random());
+
+        // payload.eventIds = payload.eventIds || [];
+        data.eventIds.push(eventId);
+
+        recentEvents.push(eventId);
 
         // dispatch locally
         window.dispatchEvent(new CustomEvent(eventName, eventData));
 
         // we're in an iframe, send to parent
-        if (window.top !== window) {
-            sendEvent(window.top, data);
+        if (window.parent !== window) {
+            sendEvent(window.parent, data);
+            log('sending up from: ', window.location.href);
         }
-        else {
-            // send to all child frames
-            for (var i = 0, l = window.frames.length; i < l; i++) {
-                sendEvent(window.frames[i], data);
-            }
+
+        // send to all child frames
+        for (var i = 0, l = window.frames.length; i < l; i++) {
+            sendEvent(window.frames[i], data);
+            log('sending down from: ', window.location.href);
         }
     };
 
@@ -84,7 +95,7 @@
         if (targetWindow === window) return;
 
         try {
-            log('sent:', payload);
+            // log('sent:', payload);
             targetWindow.postMessage({ _broadcast: payload }, '*');
         }
         catch (e) {
@@ -123,7 +134,7 @@
             log('received:', _broadcast);
 
             // share with other frames
-            broadcastEvent(_broadcast.type, _broadcast.detail, _broadcast.originId);
+            broadcastEvent(_broadcast.type, _broadcast.detail, _broadcast.originId, _broadcast.eventIds);
         }
     });
 

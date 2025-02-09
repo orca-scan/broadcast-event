@@ -9,7 +9,7 @@
     ],
     "env": {
       "stopSpecOnExpectationFailure": false,
-      "random": false,
+      "random": true,
       "failFast": true,
       "stopOnSpecFailure": true,
       "hideDisabled": true
