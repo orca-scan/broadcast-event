@@ -10,12 +10,12 @@
     'use strict';
 
     // dependency check!
-    if (typeof window.CustomEvent !== 'function') throw new Error('missing CustomEvent polyfill');
+    if (typeof window.CustomEvent !== 'function') throw new Error('Missing CustomEvent polyfill');
 
     var sender = window.location.href;
     var originId = stringHash(sender + ':' + performance.now() + ':' + Math.random());
     var debugging = true; // uncomment to console log sequence
-    var recentEvents = [];
+    var recentEvents = {};
 
     /**
      * Fire events across iframes
@@ -23,54 +23,83 @@
      *  broadcastEvent('mobile:ready', { token: '01234', email: 'john@orcascan.com' });
      * @param {string} eventName - event to dispatch
      * @param {object} [eventData] - data to send with the event
+     * @param {object} [options] - { debug: true }
      * @returns {void}
      */
-    function broadcastEvent(eventName, eventData, eventOriginId, eventIds) {
+    function broadcastEvent(eventName, eventData, options) {
 
         eventName = String(eventName || '') || '';
+        options = options || {};
 
         if (eventName.indexOf(':') === -1) throw new Error('eventName must be namespaced with :');
 
-        var data = {
-            originId: eventOriginId || originId,
+        // should we enable logging?
+        debugging = (options.debug === true);
+
+        var payload = {
             type: eventName,
             detail: eventData,
-            eventIds: eventIds || []
+            eventIds: options._eventIds || [],
+            originId: options._originId || originId // retain original originId
         };
 
-        // see if we have already sent this previoulsey (resending causes an event loop)
-        var alreadyBroadcast = recentEvents.some(function(guid) {
-            return ((data.eventIds || []).indexOf(guid) !== -1);
-        });
-
-        if (alreadyBroadcast) {
-            log('suppressed: ', window.location.href);
-            return;
-        }
-
-        // this uniquley identifies the event so we can prevent it been rebroadcast
-        var eventId = stringHash(sender + ':' + data.type + ':' + performance.now() + ':' + Math.random());
-
-        // payload.eventIds = payload.eventIds || [];
-        data.eventIds.push(eventId);
-
-        recentEvents.push(eventId);
+        // if we've already sent this, exit
+        if (alreadyBroadcast(payload)) return;
 
         // dispatch locally
         window.dispatchEvent(new CustomEvent(eventName, eventData));
 
         // we're in an iframe, send to parent
         if (window.parent !== window) {
-            sendEvent(window.parent, data);
-            log('sending up from: ', window.location.href);
+            sendEvent(window.parent, payload);
+            log('sending "' + payload.type + '" up');
         }
 
         // send to all child frames
         for (var i = 0, l = window.frames.length; i < l; i++) {
-            sendEvent(window.frames[i], data);
-            log('sending down from: ', window.location.href);
+            sendEvent(window.frames[i], payload);
+            log('sending "' + payload.type + '" down');
         }
     };
+
+    /**
+     * Checks if an event has already been sent by this instance
+     * @param {object} payload - data to be sent
+     * @returns {boolean} true if broadcast of false
+     */
+    function alreadyBroadcast(payload) {
+
+        var now = Date.now();
+
+        // remove anything older than 30 seconds
+        var expiredAfter = now - 30000;
+        Object.keys(recentEvents).forEach(function(key) {
+            if (recentEvents[key] < expiredAfter) {
+                delete recentEvents[key];
+            }
+        });
+
+        // see if we have already sent this previoulsey (resending causes an event loop)
+        var alreadyBroadcast = payload.eventIds.some(function(id) {
+            return recentEvents[id] !== undefined;
+        });
+
+        if (alreadyBroadcast) {
+            log('suppressed "' + payload.type + '"');
+            return true;
+        }
+
+        // this uniquley identifies the event so we can prevent rebroadcasts
+        var eventId = stringHash(sender + ':' + payload.type + ':' + performance.now() + ':' + Math.random());
+
+        // add event id to payload
+        payload.eventIds.push(eventId);
+
+        // store the event id so we can check if we've seen it before
+        recentEvents[eventId] = now;
+
+        return false;
+    }
 
     /**
      * console.log but only if debug=true
@@ -78,7 +107,8 @@
      */
     function log() {
         if (debugging) {
-            var params = ['broadcast-event[' + sender + ']'].concat([].slice.call(arguments));
+            var args = [].slice.call(arguments);
+            var params = ['broadcast-event[' + sender + ']'].concat(args);
             console.log.apply(console, params);
         }
     }
@@ -129,12 +159,18 @@
 
         var _broadcast = event.data && event.data._broadcast;
 
-        if (_broadcast && typeof _broadcast.type === 'string') {
+        if (_broadcast && typeof _broadcast.type === 'string' && _broadcast.originId) {
 
-            log('received:', _broadcast);
+            log('received "' + _broadcast.type + '"');
+
+            var options = {
+                _originId: _broadcast.originId,
+                _eventIds: _broadcast.eventIds,
+                debug: (debugging === true)
+            };
 
             // share with other frames
-            broadcastEvent(_broadcast.type, _broadcast.detail, _broadcast.originId, _broadcast.eventIds);
+            broadcastEvent(_broadcast.type, _broadcast.detail, options);
         }
     });
 

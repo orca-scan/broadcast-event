@@ -154,10 +154,10 @@ function execFunction(puppeteerPage, funcName) {
         }
 
     }, funcName, args)
-        .catch(function (error) {
-            // Catch and re-throw any errors from the evaluation
-            throw new Error('Error in execFunction: ' + error.message);
-        });
+    .catch(function (error) {
+        // Catch and re-throw any errors from the evaluation
+        throw new Error('Error in execFunction: ' + error.message);
+    });
 }
 
 module.exports = {

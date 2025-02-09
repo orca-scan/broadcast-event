@@ -5,7 +5,7 @@ const helpers = require('./helpers.js');
 describe('broadcast-event', function() {
 
     let browser, page, iframe, nestedIframe;
-    let consoleLogs = [];
+    let logs = [];
 
     beforeEach(async () => {
 
@@ -25,12 +25,8 @@ describe('broadcast-event', function() {
 
         // redirect puppeteer console.log to node
         page.on('console', function (msg) {
-            consoleLogs.push(msg);
-            console.log(`puppeteer log: ${msg.text()}`);
-        });
-
-        page.on('pageerror', err => {
-            console.log('🚨 JS Error on page:', err.message);
+            logs.push(msg.text());
+            // console.log(`${msg.text()}`);
         });
 
         // serve content from disk
@@ -50,6 +46,7 @@ describe('broadcast-event', function() {
 
     afterEach(async () => {
         await browser.close();
+        logs = [];
     });
 
     it('should expose broadcastEvent method', async function() {
@@ -66,6 +63,17 @@ describe('broadcast-event', function() {
         // load parent page
         await page.goto('http://localhost/parent-without-iframe.html', { waitUntil: 'load' });
 
+        // intercept postMessage calls so we can test 
+        await page.evaluate(function(){
+            window.postMessageCalls = []; // Store messages
+
+            const originalPostMessage = window.postMessage;
+            window.postMessage = function (message, targetOrigin) {
+                window.postMessageCalls.push({ message, targetOrigin });
+                return originalPostMessage.apply(this, arguments);
+            };
+        });
+
         await helpers.execFunction(page, 'broadcastEvent', 'app:ready');
 
         const postMessageCalls = await page.evaluate(function(){
@@ -75,7 +83,7 @@ describe('broadcast-event', function() {
         expect(postMessageCalls.length).toEqual(0);
     });
 
-    fit('should postMessage if iframes exist', async function() {
+    it('should postMessage to all iframes', async function() {
 
         // load parent page
         await page.goto('http://localhost/parent-with-iframe.html', { waitUntil: 'load' });
@@ -88,25 +96,24 @@ describe('broadcast-event', function() {
         await iframe.waitForSelector('#nested-iframe');
         nestedIframe = await (await iframe.$('#nested-iframe')).contentFrame();
 
-        // // fire event in topmost page
-        await helpers.execFunction(page, 'broadcastEvent', 'app:ready');
+        // fire event in topmost page (it should emit to all)
+        await helpers.execFunction(page, 'broadcastEvent', 'app:ready', undefined, { debug: true });
 
-        expect(consoleLogs.length).toBeGreaterThan(1);
+        // wait for logs to fill up
+        await helpers.sleep(250);
 
-        // const postMessageCalls1 = await page.evaluate(function(){
-        //     return window.postMessageCalls;
-        // });
-
-        // const postMessageCalls2 = await iframe.evaluate(function(){
-        //     return window.postMessageCalls;
-        // });
-
-        // const postMessageCalls3 = await nestedIframe.evaluate(function(){
-        //     return window.postMessageCalls;
-        // });
-
-        // expect(postMessageCalls1.length).toEqual(0);
-        // expect(postMessageCalls2.length).toEqual(1);
-        // expect(postMessageCalls3.length).toEqual(0);
+        // confirm we have the correct flow
+        expect(logs).toEqual([
+            'broadcast-event[http://localhost/parent-with-iframe.html] sending "app:ready" down',
+            'broadcast-event[http://localhost/iframe.html] received "app:ready"',
+            'broadcast-event[http://localhost/iframe.html] sending "app:ready" up',
+            'broadcast-event[http://localhost/iframe.html] sending "app:ready" down',
+            'broadcast-event[http://localhost/parent-with-iframe.html] received "app:ready"',
+            'broadcast-event[http://localhost/parent-with-iframe.html] suppressed "app:ready"',
+            'broadcast-event[http://localhost/nested-iframe.html] received "app:ready"',
+            'broadcast-event[http://localhost/nested-iframe.html] sending "app:ready" up',
+            'broadcast-event[http://localhost/iframe.html] received "app:ready"',
+            'broadcast-event[http://localhost/iframe.html] suppressed "app:ready"'
+        ]);     
     });
 });
