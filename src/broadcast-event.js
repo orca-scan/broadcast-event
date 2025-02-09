@@ -40,7 +40,8 @@
             type: eventName,
             detail: eventData,
             eventIds: options._eventIds || [],
-            originId: options._originId || originId // retain original originId
+            originId: options._originId || originId, // retain original originId
+            debug: debugging
         };
 
         // if we've already sent this, exit
@@ -80,11 +81,11 @@
         });
 
         // see if we have already sent this previoulsey (resending causes an event loop)
-        var alreadyBroadcast = payload.eventIds.some(function(id) {
+        var suppress = payload.eventIds.some(function(id) {
             return recentEvents[id] !== undefined;
         });
 
-        if (alreadyBroadcast) {
+        if (suppress) {
             log('suppressed "' + payload.type + '"');
             return true;
         }
@@ -125,7 +126,6 @@
         if (targetWindow === window) return;
 
         try {
-            // log('sent:', payload);
             targetWindow.postMessage({ _broadcast: payload }, '*');
         }
         catch (e) {
@@ -166,7 +166,7 @@
             var options = {
                 _originId: _broadcast.originId,
                 _eventIds: _broadcast.eventIds,
-                debug: (debugging === true)
+                debug: _broadcast.debug
             };
 
             // share with other frames
