@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="../src/broadcast-event.js"></script>
+    </head>
+    <body>
+        <h1>Nested Iframe</h1>
+        <script>
+            window.addEventListener("test:event", function (e) {
+                window.receivedNestedIframeEvent = e.detail;
+            });
+        </script>
+    </body>
+</html>

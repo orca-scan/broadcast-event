@@ -152,6 +152,7 @@
     }
   },
   "dependencies": {
+    "nock": "^9.6.1",
     "orca-variables": "git+ssh://git@github.com/orca-scan/orca-variables.git"
   }
 }
