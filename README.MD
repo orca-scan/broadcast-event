@@ -4,7 +4,7 @@ A simple way to broadcast JavaScript events across iframes.
 
 ## Why?
 
-[Orca Scan](https://orcascan.com) uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) to fire app lifecycle events such as `app-ready` in our apps. Trouble is, this only works in the current page - if you have an iframe, the JS in that iframe never sees the event. `broadcastEvent(eventName, eventData)` solves that problem.
+[Orca Scan](https://orcascan.com) uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) to fire app lifecycle events such as `app-ready` in our apps. Trouble is it only works in the current page, if you have an iframe, the JS in that frame never sees the event. `broadcastEvent(eventName, eventData)` solves that problem.
 
 ## How?
 
