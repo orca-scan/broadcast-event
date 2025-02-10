@@ -52,7 +52,7 @@
         }
 
         // dispatch locally
-        window.dispatchEvent(new CustomEvent(eventName, eventData));
+        window.dispatchEvent(new CustomEvent(eventName, { detail: eventData }));
 
         // we're in an iframe, send to parent
         if (window.parent !== window) {

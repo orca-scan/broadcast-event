@@ -160,8 +160,45 @@ function execFunction(puppeteerPage, funcName) {
     });
 }
 
+/**
+ * Wait for the browser to fire an event (including custom events)
+ * @param {object} puppeteerPage - puppeteer page
+ * @param {string} eventName - Event name
+ * @param {integer} [seconds] - number of seconds to wait (default=30)
+ * @returns {Promise<object>} resolves when event fires or timeout is reached
+ */
+async function waitForEvent(puppeteerPage, eventName, seconds) {
+
+    seconds = seconds || 30;
+
+    // use race to implement a timeout
+    return Promise.race([
+
+        // add event listener and wait for event to fire before returning
+        puppeteerPage.evaluate(function(eventName) {
+            return new Promise(function(resolve, reject) {
+                window.addEventListener(eventName, function(e) {
+
+                    // resolves when the event fires
+                    resolve({
+                        type: e.type,
+                        detail: e.detail,
+                        timeStamp: e.timeStamp
+                    });
+                });
+            });
+        }, eventName),
+
+        // if the event does not fire within n seconds, exit
+        new Promise(function(resolve) {
+            setTimeout(resolve, seconds * 1000);
+        })
+    ]);
+}
+
 module.exports = {
     mockPuppeteerRequest: mockPuppeteerRequest,
     execFunction: execFunction,
+    waitForEvent: waitForEvent,
     sleep: sleep
 };
