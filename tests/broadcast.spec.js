@@ -88,13 +88,10 @@ describe('broadcast-event', function() {
         // load parent page
         await page.goto('http://localhost/parent-with-iframe.html', { waitUntil: 'load' });
 
-        // wait for iframe to load
+        // wait for iframes to load
         await page.waitForSelector('#iframe');
         iframe = await (await page.$('#iframe')).contentFrame();
-
-        // wait for nested iframe inside the first iframe
         await iframe.waitForSelector('#nested-iframe');
-        nestedIframe = await (await iframe.$('#nested-iframe')).contentFrame();
 
         // fire event in topmost page (it should emit to all)
         await helpers.execFunction(page, 'broadcastEvent', 'app:ready', undefined, { debug: true });
@@ -115,5 +112,47 @@ describe('broadcast-event', function() {
             'broadcast-event[http://localhost/iframe.html] received "app:ready"',
             'broadcast-event[http://localhost/iframe.html] suppressed "app:ready"'
         ]);     
+    });
+
+    it('should send eventData to all iframes', async function() {
+
+        var eventName = 'test:event:' + Date.now();
+        var eventData = {
+            dadJoke: 'Why do programmers prefer dark mode? Because light attracts bugs'
+        };
+
+        // load parent page
+        await page.goto('http://localhost/parent-with-iframe.html', { waitUntil: 'load' });
+
+        // wait for iframe to load
+        await page.waitForSelector('#iframe');
+        iframe = await (await page.$('#iframe')).contentFrame();
+
+        // wait for nested iframe inside the first iframe
+        await iframe.waitForSelector('#nested-iframe');
+        nestedIframe = await (await iframe.$('#nested-iframe')).contentFrame();
+
+        var catchEvents = Promise.all([
+            helpers.waitForEvent(page, eventName),
+            helpers.waitForEvent(iframe, eventName),
+            helpers.waitForEvent(nestedIframe, eventName)
+        ]);
+
+        // fire event in topmost page (it should emit to all)
+        await helpers.execFunction(page, 'broadcastEvent', eventName, eventData, { debug: true });
+
+        var results = await catchEvents;
+
+        // top page
+        expect(results[0].type).toEqual(eventName);
+        expect(results[0].detail).toEqual(eventData);
+
+        // iframe
+        expect(results[1].type).toEqual(eventName);
+        expect(results[1].detail).toEqual(eventData);
+
+        // nested iframe
+        expect(results[2].type).toEqual(eventName);
+        expect(results[2].detail).toEqual(eventData);
     });
 });
