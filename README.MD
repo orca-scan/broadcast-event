@@ -39,6 +39,12 @@ npm i
 npm test
 ```
 
+### Build
+
+To build a new version of [broadcast-event.min.js](dist/broadcast-event.min.js) from source:
+1. increase the version number in `package.json`
+2. run `npm run build`
+
 ## Contribute
 
 We Open Source code we think might help others, if you'd like to assist:
