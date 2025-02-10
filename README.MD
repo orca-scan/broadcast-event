@@ -14,6 +14,31 @@ A simple way to broadcast JavaScript events across iframes.
 
 ![How broadcastEvent works](docs/how-broadcast-event-works.png)
 
+### Debugging
+
+Pass `{ debug: true }` as the thrid parameter to see a console log of the event broadcast flow. 
+
+```js
+/**
+ * Fire events across iframes
+ * @param {string} eventName - event to dispatch
+ * @param {object} [eventData] - data to send with the event
+ * @param {object} [options] - { debug: true }
+ * @returns {void}
+ */
+broadcastEvent(eventName, eventData, options);
+```
+
+### Tests
+
+We have a few unit tests to confirm stability, more will be added over time. To run the tests use:
+
+```bash
+cd broadcast-event
+npm i
+npm test
+```
+
 ## Contribute
 
 We Open Source code we think might help others, if you'd like to assist:

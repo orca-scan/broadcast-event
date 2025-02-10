@@ -14,7 +14,6 @@
 
     var sender = window.location.href;
     var originId = stringHash(sender + ':' + performance.now() + ':' + Math.random());
-    var debugging = true; // uncomment to console log sequence
     var recentEvents = {};
 
     /**
@@ -34,18 +33,23 @@
         if (eventName.indexOf(':') === -1) throw new Error('eventName must be namespaced with :');
 
         // should we enable logging?
-        debugging = (options.debug === true);
+        options.debug = (options.debug === true);
 
         var payload = {
             type: eventName,
             detail: eventData,
             eventIds: options._eventIds || [],
             originId: options._originId || originId, // retain original originId
-            debug: debugging
+            debug: options.debug
         };
 
         // if we've already sent this, exit
-        if (alreadyBroadcast(payload)) return;
+        if (alreadyBroadcast(payload)) {
+            if (options.debug) {
+                log('suppressed "' + payload.type + '"');
+            }
+            return;
+        }
 
         // dispatch locally
         window.dispatchEvent(new CustomEvent(eventName, eventData));
@@ -53,13 +57,17 @@
         // we're in an iframe, send to parent
         if (window.parent !== window) {
             sendEvent(window.parent, payload);
-            log('sending "' + payload.type + '" up');
+            if (options.debug) {
+                log('sending "' + payload.type + '" up');
+            }
         }
 
         // send to all child frames
         for (var i = 0, l = window.frames.length; i < l; i++) {
             sendEvent(window.frames[i], payload);
-            log('sending "' + payload.type + '" down');
+            if (options.debug) {
+                log('sending "' + payload.type + '" down');
+            }
         }
     };
 
@@ -85,10 +93,8 @@
             return recentEvents[id] !== undefined;
         });
 
-        if (suppress) {
-            log('suppressed "' + payload.type + '"');
-            return true;
-        }
+        // exit if we've already processed this event
+        if (suppress) return true;
 
         // this uniquley identifies the event so we can prevent rebroadcasts
         var eventId = stringHash(sender + ':' + payload.type + ':' + performance.now() + ':' + Math.random());
@@ -107,11 +113,9 @@
      * @returns {void}
      */
     function log() {
-        if (debugging) {
-            var args = [].slice.call(arguments);
-            var params = ['broadcast-event[' + sender + ']'].concat(args);
-            console.log.apply(console, params);
-        }
+        var args = [].slice.call(arguments);
+        var params = ['broadcast-event[' + sender + ']'].concat(args);
+        console.log.apply(console, params);
     }
 
     /**
@@ -161,7 +165,9 @@
 
         if (_broadcast && typeof _broadcast.type === 'string' && _broadcast.originId) {
 
-            log('received "' + _broadcast.type + '"');
+            if (_broadcast.debug) {
+                log('received "' + _broadcast.type + '"');
+            }
 
             var options = {
                 _originId: _broadcast.originId,
