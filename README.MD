@@ -12,6 +12,8 @@ A simple way to broadcast JavaScript events across iframes.
 2. Fire an event using `broadcastEvent('my:event', { name: 'my JSON data' });`
 3. Listen everywhere `window.addEventListener('my:event', function(e) { /* go wild */ })`
 
+As with CustomEvent, `e.detail` contains the event data with an additional property `e.detail._originId` which contains a unique identifier for each window/frame.
+
 ![How broadcastEvent works](docs/how-broadcast-event-works.png)
 
 ### Debugging

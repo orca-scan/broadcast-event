@@ -145,14 +145,21 @@ describe('broadcast-event', function() {
 
         // top page
         expect(results[0].type).toEqual(eventName);
-        expect(results[0].detail).toEqual(eventData);
+        expect(results[0].detail.dadJoke).toEqual(eventData.dadJoke);
+        expect(results[0].detail._originId).toBeDefined();
 
         // iframe
         expect(results[1].type).toEqual(eventName);
-        expect(results[1].detail).toEqual(eventData);
+        expect(results[1].detail.dadJoke).toEqual(eventData.dadJoke);
+        expect(results[1].detail._originId).toBeDefined();
 
         // nested iframe
         expect(results[2].type).toEqual(eventName);
-        expect(results[2].detail).toEqual(eventData);
+        expect(results[2].detail.dadJoke).toEqual(eventData.dadJoke);
+        expect(results[2].detail._originId).toBeDefined();
+
+        // ensure originId maintained across frames
+        expect(results[1].detail._originId).toEqual(results[0].detail._originId);
+        expect(results[2].detail._originId).toEqual(results[0].detail._originId);
     });
 });
