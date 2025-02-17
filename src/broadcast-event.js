@@ -28,6 +28,7 @@
     function broadcastEvent(eventName, eventData, options) {
 
         eventName = String(eventName || '') || '';
+        eventData = eventData || {};
         options = options || {};
 
         if (eventName.indexOf(':') === -1) throw new Error('eventName must be namespaced with :');
@@ -35,11 +36,15 @@
         // should we enable logging?
         options.debug = (options.debug === true);
 
+        // send originId so handlers know whos calling (always retain original originId)
+        if (!eventData._originId) {
+            eventData._originId = originId;
+        }
+
         var payload = {
             type: eventName,
             detail: eventData,
             eventIds: options._eventIds || [],
-            originId: options._originId || originId, // retain original originId
             debug: options.debug
         };
 
@@ -163,14 +168,13 @@
 
         var _broadcast = event.data && event.data._broadcast;
 
-        if (_broadcast && typeof _broadcast.type === 'string' && _broadcast.originId) {
+        if (_broadcast && typeof _broadcast.type === 'string' && _broadcast.detail && _broadcast.detail._originId) {
 
             if (_broadcast.debug) {
                 log('received "' + _broadcast.type + '"');
             }
 
             var options = {
-                _originId: _broadcast.originId,
                 _eventIds: _broadcast.eventIds,
                 debug: _broadcast.debug
             };
