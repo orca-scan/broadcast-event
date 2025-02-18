@@ -43,9 +43,10 @@ Pass `{ debug: true }` as the thrid parameter to see a console log of the event 
 ```js
 /**
  * Fire events across iframes
- * @param {string} eventName - event to dispatch
- * @param {object} [eventData] - data to send with the event
- * @param {object} [options] - { debug: true }
+ * @param {string} eventName - event name to dispatch (must be namespaced with `:`)
+ * @param {object} [eventData={}] - data to send with the event
+ * @param {object} [options={}] - additional options for event behavior
+ * @param {boolean} [options.debug=false] - enables console logs if `true`
  * @returns {void}
  */
 broadcastEvent(eventName, eventData, options);
