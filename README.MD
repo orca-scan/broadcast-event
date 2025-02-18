@@ -4,11 +4,29 @@ A simple way to fire JavaScript events across iframes.
 
 ## Motivation
 
-[Orca Scan](https://orcascan.com) uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) to fire app lifecycle events such as `app:ready` in our apps. Trouble is `dispatchEvent` only works in the current page, if you have an iframe, the JS in that frame never sees the event. `broadcastEvent(eventName, eventData, options)` solves that problem.
+[Orca Scan](https://orcascan.com) uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) to fire app lifecycle events such as `app:ready` in our apps. Trouble is only event handlers in the current page recieve the event, if you have an iframe the handler in that frame never sees the event. 
+
+`broadcastEvent(eventName, eventData, options)` was created to solve that problem.
+
+```js
+/**
+ * @param {string} eventName - event to dispatch
+ * @param {object} [eventData={}] - optional data to send
+ * @param {object} [options={}] - optional options ;)
+ * @param {boolean} [options.debug=false] - console log if true (default false)
+ * @param {string} [options.target=e.detail._originId] - if set, send event only to that frame
+ * @returns {void}
+ */
+broadcastEvent(eventName, eventData, options);
+```
+
+![How broadcastEvent works](docs/how-broadcast-event-works.png)
 
 ## Usage
 
-Add the [broadcast-event.min.js](dist/broadcast-event.min.js) all pages in your app.
+Add [broadcast-event.min.js](dist/broadcast-event.min.js) to all pages you want to broadcast/recieve an event:
+
+### broadcast an event
 
 From any page/iframe, broadcast an event to all:
 
@@ -17,10 +35,11 @@ broadcastEvent('my:event', {
     firstName: 'Micky',
     lastName: 'Mouse'
 });
-
 ```
 
-From any page/iframe, listen for a broadcast event:
+### recieve an event
+
+From within any page/iframe, listen for an event as normal:
 
 ```js
 window.addEventListener('my:event', function(e) {
@@ -32,24 +51,54 @@ window.addEventListener('my:event', function(e) {
 });
 ```
 
-`broadcastEvent` uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) internally. This allows developers to listen for the events using `window.addEventListener`. `e.detail` always contains the event data with an additional property `e.detail._originId` which contains a unique identifier for sending window/frame.
+#### event data
 
-![How broadcastEvent works](docs/how-broadcast-event-works.png)
-
-### Debugging
-
-Pass `{ debug: true }` as the thrid parameter to see a console log of the event broadcast flow. 
+The following event data is included with every event and accessible via `e.detail`
 
 ```js
-/**
- * Fire events across iframes
- * @param {string} eventName - event name to dispatch (must be namespaced with `:`)
- * @param {object} [eventData={}] - data to send with the event
- * @param {object} [options={}] - additional options for event behavior
- * @param {boolean} [options.debug=false] - enables console logs if `true`
- * @returns {void}
- */
-broadcastEvent(eventName, eventData, options);
+{
+  _originId: '1sadfa3', // unique id for sending instance of broadcastEvent
+  _targetId: '223eqw3', // optional originId of frame to target
+  ...                   // your event data
+}
+```
+
+### broadcast to a specific frame
+
+There are times when you might want to respond to an event, the best way to do this is to pass the `_originId` of the event you recieved as the `target` of the next broadcast:
+
+```js
+// listen for an event
+window.addEventListener('my:event', function(e) {
+
+    // fire an event in the senders window
+    broadcastEvent('my:event:ty', { message: 'Thanks!' }, { target: e.detail._originId });
+});
+```
+
+All frames will participate is broadcasting the event, but will not fire it locally unless the `target` matches their `_originId`.
+
+### debugging
+
+To debug issues broadcasting events pass `{ debug: true }` as the event options:
+
+```js
+broadcastEvent('my:event', { firstName: 'Micky', lastName: 'Mouse' }, { debug: true });
+```
+
+Then open Dev Tools to see a console log of the broadcast flow:
+
+```
+broadcast-event[http://localhost/parent-with-iframe.html] sending "my:event" down
+broadcast-event[http://localhost/iframe.html] received "my:event"
+broadcast-event[http://localhost/iframe.html] sending "my:event" up
+broadcast-event[http://localhost/iframe.html] sending "my:event" down
+broadcast-event[http://localhost/parent-with-iframe.html] received "my:event"
+broadcast-event[http://localhost/parent-with-iframe.html] suppressed "my:event"
+broadcast-event[http://localhost/nested-iframe.html] received "my:event"
+broadcast-event[http://localhost/nested-iframe.html] sending "my:event" up
+broadcast-event[http://localhost/iframe.html] received "my:event"
+broadcast-event[http://localhost/iframe.html] suppressed "app:ready
 ```
 
 ### Tests

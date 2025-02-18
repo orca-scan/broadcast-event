@@ -13,7 +13,7 @@
     if (typeof window.CustomEvent !== 'function') throw new Error('Missing CustomEvent polyfill');
 
     var sender = window.location.href;
-    var originId = stringHash(sender + ':' + performance.now() + ':' + Math.random());
+    var originId = stringHash(sender + ':' + Date.now() + ':' + Math.random() * 1e18);
     var recentEvents = {};
 
     /**
@@ -21,8 +21,10 @@
      * @example
      *  broadcastEvent('mobile:ready', { token: '01234', email: 'john@orcascan.com' });
      * @param {string} eventName - event to dispatch
-     * @param {object} [eventData] - data to send with the event
-     * @param {object} [options] - { debug: true }
+     * @param {object} [eventData={}] - optional data to send
+     * @param {object} [options={}] - optional options ;)
+     * @param {boolean} [options.debug=false] - console log if true (default false)
+     * @param {string} [options.target=e.detail._originId] - if set, send event only to that frame
      * @returns {void}
      */
     function broadcastEvent(eventName, eventData, options) {
@@ -31,8 +33,6 @@
         eventData = eventData || {};
         options = options || {};
 
-        if (eventName.indexOf(':') === -1) throw new Error('eventName must be namespaced with :');
-
         // should we enable logging?
         options.debug = (options.debug === true);
 
@@ -40,6 +40,9 @@
         if (!eventData._originId) {
             eventData._originId = originId;
         }
+
+        // maintain target if set
+        eventData._targetId = eventData._targetId || options.target;
 
         var payload = {
             type: eventName,
@@ -56,9 +59,11 @@
             return;
         }
 
-        // dispatch locally
-        window.dispatchEvent(new CustomEvent(eventName, { detail: eventData }));
-
+        // only fire event locally if we have no target or we are the target
+        if (!eventData._targetId || eventData._targetId === originId) {
+            window.dispatchEvent(new CustomEvent(eventName, { detail: eventData }));
+        }
+    
         // we're in an iframe, send to parent
         if (window.parent !== window) {
             sendEvent(window.parent, payload);
@@ -114,7 +119,7 @@
     }
 
     /**
-     * console.log but only if debug=true
+     * console.log helper
      * @returns {void}
      */
     function log() {
@@ -158,7 +163,6 @@
 
     /**
      * handles incoming messages and processes event dispatching
-     * prevents rebroadcast loops by tracking seen event IDs
      * @param {MessageEvent} event - received postMessage event
      * @returns {void}
      */
@@ -176,10 +180,10 @@
 
             var options = {
                 _eventIds: _broadcast.eventIds,
-                debug: _broadcast.debug
+                debug: _broadcast.debug,
+                target: _broadcast.target
             };
 
-            // share with other frames
             broadcastEvent(_broadcast.type, _broadcast.detail, options);
         }
     });
