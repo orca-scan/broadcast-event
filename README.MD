@@ -20,7 +20,13 @@ A simple way to fire JavaScript events across iframes.
 broadcastEvent(eventName, eventData, options);
 ```
 
-![How broadcastEvent works](docs/how-broadcast-event-works.png)
+### How it works
+
+* `broadcastEvent` exists in every page
+* `broadcastEvent` fires the event locally and sent to all frames using `postMessage`
+* `broadcastEvent` in every page recieves the `postMessage` and fires the event locally
+
+Using `postMessage` allows this script to fire JS events across iframes on different domains, and pass data between them.
 
 ## Usage
 
