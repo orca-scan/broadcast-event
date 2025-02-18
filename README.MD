@@ -23,7 +23,7 @@ broadcastEvent(eventName, eventData, options);
 ### How it works
 
 * `broadcastEvent` exists in every page
-* `broadcastEvent` fires the event locally and sent to all frames using `postMessage`
+* `broadcastEvent` fires the event locally and sends to all iframes using `postMessage`
 * `broadcastEvent` in every page recieves the `postMessage` and fires the event locally
 
 `postMessage` allows broadcastEvent to fire events across iframes _(with data)_ on different domains.
