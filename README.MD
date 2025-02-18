@@ -26,7 +26,7 @@ broadcastEvent(eventName, eventData, options);
 * `broadcastEvent` fires the event locally and sent to all frames using `postMessage`
 * `broadcastEvent` in every page recieves the `postMessage` and fires the event locally
 
-Using `postMessage` allows this script to fire JS events across iframes on different domains, and pass data between them.
+`postMessage` allows broadcastEvent to fire events across iframes on different domains, and pass data between them.
 
 ## Usage
 
