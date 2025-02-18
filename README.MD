@@ -26,7 +26,7 @@ broadcastEvent(eventName, eventData, options);
 
 Add [broadcast-event.min.js](dist/broadcast-event.min.js) to all pages you want to broadcast/recieve an event:
 
-### broadcast an event
+### Fire an event
 
 From any page/iframe, broadcast an event to all:
 
@@ -37,7 +37,7 @@ broadcastEvent('my:event', {
 });
 ```
 
-### recieve an event
+### Recieve an event
 
 From within any page/iframe, listen for an event as normal:
 
@@ -63,7 +63,7 @@ The following event data is included with every event and accessible via `e.deta
 }
 ```
 
-### broadcast to a specific frame
+### Broadcast to a specific frame
 
 There are times when you might want to respond to an event, the best way to do this is to pass the `_originId` of the event you recieved as the `target` of the next broadcast:
 
@@ -78,7 +78,7 @@ window.addEventListener('my:event', function(e) {
 
 All frames will participate is broadcasting the event, but will not fire it locally unless the `target` matches their `_originId`.
 
-### debugging
+### Debugging
 
 To debug issues broadcasting events pass `{ debug: true }` as the event options:
 
