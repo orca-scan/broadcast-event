@@ -1,16 +1,36 @@
 # broadcast-event
 
-A simple way to broadcast JavaScript events across iframes.
+A simple way to fire JavaScript events across iframes.
 
-## Why?
+## Motivation
 
 [Orca Scan](https://orcascan.com) uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) to fire app lifecycle events such as `app:ready` in our apps. Trouble is `dispatchEvent` only works in the current page, if you have an iframe, the JS in that frame never sees the event. `broadcastEvent(eventName, eventData)` solves that problem.
 
-## How?
+## Usage
 
-1. Add [broadcast-event.min.js](dist/broadcast-event.min.js) to parent and iframe page
-2. Fire an event using `broadcastEvent('my:event', { name: 'my JSON data' });`
-3. Listen everywhere `window.addEventListener('my:event', function(e) { /* go wild */ })`
+Add the [broadcast-event.min.js](dist/broadcast-event.min.js) all pages in your app.
+
+From any page/iframe, broadcast an event to all:
+
+```js
+broadcastEvent('my:event', {
+    firstName: 'Micky',
+    lastName: 'Mouse'
+});
+
+```
+
+From any page/iframe, listen for a broadcast event:
+
+```js
+window.addEventListener('my:event', function(e) {
+
+    // get the data sent with the event
+    var eventData = e.detail;
+
+    console.log(eventData);
+});
+```
 
 As with CustomEvent, `e.detail` contains the event data with an additional property `e.detail._originId` which contains a unique identifier for each window/frame.
 

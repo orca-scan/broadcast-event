@@ -1,6 +1,6 @@
 /*!
  * broadcast-events.js v@version@
- * @description A simple way to broadcast JavaScript events across iframes.
+ * @description A simple way to fire JavaScript events across iframes.
  * @see {@link https://github.com/orca-scan/broadcast-event}
  * @author Orca Scan <orcascan.com>
  * @license MIT
