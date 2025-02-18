@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 const helpers = require('./helpers.js');
+const exp = require('constants');
 
 describe('broadcast-event', function() {
 
@@ -161,5 +162,113 @@ describe('broadcast-event', function() {
         // ensure originId maintained across frames
         expect(results[1].detail._originId).toEqual(results[0].detail._originId);
         expect(results[2].detail._originId).toEqual(results[0].detail._originId);
+    });
+
+    it('should generate originId for each page', async function() {
+
+        // load parent page
+        await page.goto('http://localhost/parent-with-iframe.html', { waitUntil: 'load' });
+
+        // wait for iframes to load
+        await page.waitForSelector('#iframe');
+        iframe = await (await page.$('#iframe')).contentFrame();
+        await iframe.waitForSelector('#nested-iframe');
+        nestedIframe = await (await iframe.$('#nested-iframe')).contentFrame();
+
+        // setup listeners to collect _originIds
+        var catchInitEvents = Promise.all([
+            helpers.waitForEvent(page, 'my:event:1'),
+            helpers.waitForEvent(iframe, 'my:event:2'),
+            helpers.waitForEvent(nestedIframe, 'my:event:3')
+        ]);
+
+        // broadcast an event from each frame so can we get the _originId of each
+        await Promise.all([
+            helpers.execFunction(page, 'broadcastEvent', 'my:event:1'),
+            helpers.execFunction(iframe, 'broadcastEvent', 'my:event:2'),
+            helpers.execFunction(nestedIframe, 'broadcastEvent', 'my:event:3')
+        ]);
+
+        // once all handlers have recieved the event
+        var results = await catchInitEvents;
+
+        // check we have an _originId for each 
+        var parentOriginId = results[0].detail._originId;
+        var iframeOriginId = results[1].detail._originId;
+        var nestedIframeOriginId = results[2].detail._originId;
+
+        expect(parentOriginId).toBeDefined();
+        expect(iframeOriginId).toBeDefined();
+        expect(nestedIframeOriginId).toBeDefined();
+
+        // check _originId for each window is unique
+        expect(parentOriginId).not.toEqual(iframeOriginId);
+        expect(parentOriginId).not.toEqual(nestedIframeOriginId);
+        expect(iframeOriginId).not.toEqual(parentOriginId);
+        expect(iframeOriginId).not.toEqual(nestedIframeOriginId);
+        expect(nestedIframeOriginId).not.toEqual(parentOriginId);
+        expect(nestedIframeOriginId).not.toEqual(iframeOriginId);
+    });
+
+    it('should allow targeting only 1 frame', async function() {
+
+        // 1. broadcast an event from each frame to collect origin ids
+        // 2. broadcast an event to a specific frame
+        // 3. confirm only the target frame recieved it (all others did not recieve an event)
+
+        // load parent page
+        await page.goto('http://localhost/parent-with-iframe.html', { waitUntil: 'load' });
+
+        // wait for iframes to load
+        await page.waitForSelector('#iframe');
+        iframe = await (await page.$('#iframe')).contentFrame();
+        await iframe.waitForSelector('#nested-iframe');
+        nestedIframe = await (await iframe.$('#nested-iframe')).contentFrame();
+
+        // setup listeners for initial events (need to do this to collect _originIds)
+        var catchInitEvents = Promise.all([
+            helpers.waitForEvent(page, 'my:event:1'),
+            helpers.waitForEvent(iframe, 'my:event:2'),
+            helpers.waitForEvent(nestedIframe, 'my:event:3')
+        ]);
+
+        // broadcast and event in each frame so can we get the _originId of each
+        await Promise.all([
+            helpers.execFunction(page, 'broadcastEvent', 'my:event:1'),
+            helpers.execFunction(iframe, 'broadcastEvent', 'my:event:2'),
+            helpers.execFunction(nestedIframe, 'broadcastEvent', 'my:event:3')
+        ]);
+
+        // once all handlers have recieved the event
+        var results = await catchInitEvents;
+
+        // check we have an _originId for each 
+        var parentOriginId = results[0].detail._originId;
+        var iframeOriginId = results[1].detail._originId;
+        var nestedIframeOriginId = results[2].detail._originId;
+
+        // listen for targeted event in al frames
+        var targetedEventName = 'my:targeted:event';
+        var targetedEventListeners = Promise.all([
+            helpers.waitForEvent(page, targetedEventName, 1),
+            helpers.waitForEvent(iframe, targetedEventName, 1),
+            helpers.waitForEvent(nestedIframe, targetedEventName, 1)
+        ]);
+
+        // broadcast targeted event from top/parent to nested iframe
+        var options = { target: nestedIframeOriginId };
+        await helpers.execFunction(page, 'broadcastEvent', targetedEventName, undefined, options);
+
+        // wait for event handlers to comlpete
+        var targetedEventResults = await targetedEventListeners;
+
+        // top/parent and iframe should not get an event
+        expect(targetedEventResults[0]).toBeUndefined();
+        expect(targetedEventResults[1]).toBeUndefined();
+
+        // nested iframe should have the event
+        expect(targetedEventResults[2]).toBeDefined();
+        expect(targetedEventResults[2].detail._originId).toEqual(parentOriginId);
+        expect(targetedEventResults[2].detail._targetId).toEqual(nestedIframeOriginId);
     });
 });
