@@ -101,7 +101,7 @@ broadcast-event[http://localhost/iframe.html] received "my:event"
 broadcast-event[http://localhost/iframe.html] suppressed "app:ready
 ```
 
-### Tests
+## Tests
 
 We have a few unit tests to confirm stability, more will be added over time. To run the tests use:
 
@@ -111,7 +111,7 @@ npm i
 npm test
 ```
 
-### Build
+## Build
 
 To build a new version of [broadcast-event.min.js](dist/broadcast-event.min.js) from source:
 1. increase the version number in `package.json`
