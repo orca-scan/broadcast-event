@@ -76,7 +76,7 @@ window.addEventListener('my:event', function(e) {
 });
 ```
 
-All frames participate in broadcasting events, but will not fire the event locally unless the `target===_originId`.
+All frames participate in broadcasting events, but will not fire the event locally unless `target` equals `_originId`.
 
 ### Debugging
 
