@@ -4,7 +4,7 @@ A simple way to fire JavaScript events across iframes.
 
 ## Motivation
 
-[Orca Scan](https://orcascan.com) uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) to fire app lifecycle events such as `app:ready` in our apps. Trouble is `dispatchEvent` only works in the current page, if you have an iframe, the JS in that frame never sees the event. `broadcastEvent(eventName, eventData)` solves that problem.
+[Orca Scan](https://orcascan.com) uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) to fire app lifecycle events such as `app:ready` in our apps. Trouble is `dispatchEvent` only works in the current page, if you have an iframe, the JS in that frame never sees the event. `broadcastEvent(eventName, eventData, options)` solves that problem.
 
 ## Usage
 
@@ -32,7 +32,7 @@ window.addEventListener('my:event', function(e) {
 });
 ```
 
-As with CustomEvent, `e.detail` contains the event data with an additional property `e.detail._originId` which contains a unique identifier for each window/frame.
+`broadcastEvent` uses [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent) internally. This allows developers to listen for the events using `window.addEventListener`. `e.detail` always contains the event data with an additional property `e.detail._originId` which contains a unique identifier for sending window/frame.
 
 ![How broadcastEvent works](docs/how-broadcast-event-works.png)
 
