@@ -29,6 +29,8 @@
      */
     function broadcastEvent(eventName, eventData, options) {
 
+        if (eventData && typeof eventData !== 'object') throw new Error('eventData must be an object');
+
         eventName = String(eventName || '') || '';
         eventData = eventData || {};
         options = options || {};
