@@ -196,9 +196,68 @@ async function waitForEvent(puppeteerPage, eventName, seconds) {
     ]);
 }
 
+/**
+ * Spies on a function inside a Puppeteer page, mimicking Jasmine spy.
+ * @param {object} page - Puppeteer page object.
+ * @param {string} functionName - Name of the function to spy on (e.g., 'postMessage').
+ * @returns {Promise<object>} - Resolves with a spy object containing spy methods.
+ *
+ * @example
+ * var spy = await spyOnFunction(page, 'postMessage');
+ * await page.evaluate(function () { window.postMessage({ foo: 'bar' }, '*'); });
+ * var calls = await spy.calls();
+ * console.log(calls); // [ [{ foo: 'bar' }, '*' ] ]
+ * var count = await spy.count();
+ * await spy.clear();
+ */
+async function spyOnFunction(page, functionName) {
+
+    await page.evaluate(function (fnName) {
+        if (!window[fnName] || typeof window[fnName] !== 'function') {
+            throw new Error('Function "' + fnName + '" does not exist on window.');
+        }
+
+        window.__spiedCalls = window.__spiedCalls || {};
+        window.__spiedCalls[fnName] = [];
+        window.__originalFn = window.__originalFn || {};
+        window.__originalFn[fnName] = window[fnName];
+
+        window[fnName] = function () {
+            var args = Array.prototype.slice.call(arguments);
+            window.__spiedCalls[fnName].push(args);
+            return window.__originalFn[fnName].apply(this, args);
+        };
+    }, functionName);
+
+    return {
+
+        /** Retrieves all recorded calls. */
+        calls: function () {
+            return page.evaluate(function (fn) {
+                return window.__spiedCalls[fn] || [];
+            }, functionName);
+        },
+
+        /** Retrieves the number of times the function was called. */
+        count: function () {
+            return page.evaluate(function (fn) {
+                return window.__spiedCalls[fn] ? window.__spiedCalls[fn].length : 0;
+            }, functionName);
+        },
+
+        /** Clears all stored calls. */
+        clear: function () {
+            return page.evaluate(function (fn) {
+                window.__spiedCalls[fn] = [];
+            }, functionName);
+        }
+    };
+}
+
 module.exports = {
     mockPuppeteerRequest: mockPuppeteerRequest,
     execFunction: execFunction,
     waitForEvent: waitForEvent,
+    spyOnFunction: spyOnFunction,
     sleep: sleep
 };

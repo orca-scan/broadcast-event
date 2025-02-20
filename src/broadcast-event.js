@@ -23,8 +23,9 @@
      * @param {string} eventName - event to dispatch
      * @param {object} [eventData={}] - optional data to send
      * @param {object} [options={}] - optional options ;)
+     * @param {boolean} [options.encrypt=false] - if set, encrypts event data in transit
+     * @param {string} [options.target=e.detail._originId] - if set, sends event only to that frame
      * @param {boolean} [options.debug=false] - console log if true (default false)
-     * @param {string} [options.target=e.detail._originId] - if set, send event only to that frame
      * @returns {void}
      */
     function broadcastEvent(eventName, eventData, options) {
@@ -64,6 +65,13 @@
         // only fire event locally if we have no target or we are the target
         if (!eventData._targetId || eventData._targetId === originId) {
             window.dispatchEvent(new CustomEvent(eventName, { detail: eventData }));
+        }
+
+        // if required, encrypt the payload
+        if (options.encrypt) {
+            var encryptionData = JSON.stringify(eventData);
+            var encryptionKey = eventData._originId;
+            payload.detail = 'BE:' + encrypt(encryptionData, encryptionKey) + ':' + encryptionKey;
         }
     
         // we're in an iframe, send to parent
@@ -131,6 +139,16 @@
     }
 
     /**
+     * console.warn helper
+     * @returns {void}
+     */
+    function warn() {
+        var args = [].slice.call(arguments);
+        var params = ['broadcast-event[' + sender + ']'].concat(args);
+        console.warn.apply(console, params);
+    }
+
+    /**
      * Send an event to another window using postMessage
      * @param {Window} targetWindow - window to send message to
      * @param {object} payload - data to send
@@ -164,6 +182,45 @@
     }
 
     /**
+     * Encrypts a string using XOR + Base64 encoding.
+     * @param {string} input - The plaintext string to encrypt.
+     * @param {string} key - The encryption key.
+     * @returns {string} - The encrypted string, Base64-encoded.
+     */
+    function encrypt(input, key) {
+        if (!key) throw new Error('Encryption key is required');
+
+        var output = [];
+        for (var i = 0; i < input.length; i++) {
+            var keyChar = key.charCodeAt(i % key.length);
+            var mixedChar = input.charCodeAt(i) ^ keyChar ^ (i % 256); // Adds position-dependent entropy
+            output.push(String.fromCharCode(mixedChar));
+        }
+
+        return btoa(output.join(''));
+    }
+
+    /**
+     * Decrypts a string encrypted using XOR + Base64 encoding.
+     * @param {string} input - The Base64-encoded encrypted string.
+     * @param {string} key - The encryption key.
+     * @returns {string} - The decrypted plaintext string.
+     */
+    function decrypt(input, key) {
+        if (!key) throw new Error('Decryption key is required');
+
+        var decoded = atob(input);
+        var output = [];
+        for (var i = 0; i < decoded.length; i++) {
+            var keyChar = key.charCodeAt(i % key.length);
+            var originalChar = decoded.charCodeAt(i) ^ keyChar ^ (i % 256);
+            output.push(String.fromCharCode(originalChar));
+        }
+
+        return output.join('');
+    }
+
+    /**
      * handles incoming messages and processes event dispatching
      * @param {MessageEvent} event - received postMessage event
      * @returns {void}
@@ -174,10 +231,26 @@
 
         var _broadcast = event.data && event.data._broadcast;
 
-        if (_broadcast && typeof _broadcast.type === 'string' && _broadcast.detail && _broadcast.detail._originId) {
+        if (_broadcast && typeof _broadcast.type === 'string' && _broadcast.detail) {
 
             if (_broadcast.debug) {
                 log('received "' + _broadcast.type + '"');
+            }
+
+            // if event data is encrypted, decrypt
+            if (typeof _broadcast.detail === 'string' && _broadcast.detail.indexOf('BE:') === 0) {
+                var encryptedParts = _broadcast.detail.split(':');
+                var encryptedPrefix = encryptedParts[0] || '';
+                var encryptedData = encryptedParts[1] || '';
+                var encryptionKey = encryptedParts[2] || '';
+                var unencryptedData = decrypt(encryptedData, encryptionKey);
+                try {
+                    _broadcast.detail = JSON.parse(unencryptedData);
+                }
+                catch(err) {
+                    warn('Unable to decrypt eventData');
+                    _broadcast.detail = null;
+                }
             }
 
             var options = {
