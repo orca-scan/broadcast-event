@@ -80,24 +80,15 @@ describe('broadcast-event', function() {
         // load parent page
         await page.goto('http://localhost/parent-without-iframe.html', { waitUntil: 'load' });
 
-        // intercept postMessage calls so we can test 
-        await page.evaluate(function(){
-            window.postMessageCalls = []; // Store messages
+        // spy on post message
+        var postMessageSpy = await helpers.spyOnFunction(page, 'postMessage');
 
-            const originalPostMessage = window.postMessage;
-            window.postMessage = function (message, targetOrigin) {
-                window.postMessageCalls.push({ message, targetOrigin });
-                return originalPostMessage.apply(this, arguments);
-            };
-        });
-
+        // broadcast
         await helpers.execFunction(page, 'broadcastEvent', 'app:ready');
 
-        const postMessageCalls = await page.evaluate(function(){
-            return window.postMessageCalls;
-        });
-    
-        expect(postMessageCalls.length).toEqual(0);
+        // confirm we did not postMessage
+        var postMessageCalls = await postMessageSpy.count();
+        expect(postMessageCalls).toEqual(0);
     });
 
     it('should postMessage to all iframes', async function() {
