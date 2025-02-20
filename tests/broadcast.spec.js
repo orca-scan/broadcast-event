@@ -308,10 +308,10 @@ describe('broadcast-event', function() {
         // intercept postMessage on topmost page so we can inspect the payload
         var postMessageSpy = await helpers.spyOnFunction(page, 'postMessage');
 
-        // listen for broadcasts on topmost frame
+        // listen for broadcasts
         var eventListener = helpers.waitForEvent(iframe, eventName);
 
-        // broadcast an event from nested iframe
+        // broadcast an event from iframe
         await helpers.execFunction(iframe, 'broadcastEvent', eventName, eventData, { encrypt: true });
 
         // once handler recieved the event
@@ -332,7 +332,7 @@ describe('broadcast-event', function() {
         expect(typeof postMessagePayload.detail).toEqual('string');
         expect(postMessagePayload.detail).toStartWith('BE:');
 
-        // confirm we got the event data as normal
+        // confirm eventData was decrypted
         expect(e.type).toEqual(eventName);
         expect(e.detail._originId).toBeDefined();
         expect(e.detail.firstName).toEqual(eventData.firstName);
