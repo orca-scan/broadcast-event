@@ -87,7 +87,7 @@ All frames participate in broadcasting events, but will not fire the event local
 
 ### Encrypting event data
 
-`broadcastEvent` sends event data via `postMessage` to all frames it finds in the page. This could mean it sends it to an iframe injected by a third party script. To avoid revealing sensertive information, you can pass `{ encrypt: true }` as an option, eventData is then encrypted in transit and decrypted on reciept.
+`broadcastEvent` sends event data via `postMessage` to all iframes. This could mean it's sending to an iframe injected by a third party script. To avoid revealing sensertive information, pass `encrypt: true` as an option, eventData is then encrypted in transit and decrypted on reciept.
 
 ### Debugging
 
