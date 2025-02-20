@@ -237,19 +237,18 @@
                 log('received "' + _broadcast.type + '"');
             }
 
-            // if event data is encrypted, decrypt
+            // decrypt event data if encrypted
             if (typeof _broadcast.detail === 'string' && _broadcast.detail.indexOf('BE:') === 0) {
-                var encryptedParts = _broadcast.detail.split(':');
-                var encryptedPrefix = encryptedParts[0] || '';
-                var encryptedData = encryptedParts[1] || '';
-                var encryptionKey = encryptedParts[2] || '';
-                var unencryptedData = decrypt(encryptedData, encryptionKey);
+                var parts = _broadcast.detail.split(':');
+                var encryptedData = parts[1];
+                var encryptionKey = parts[2];
+
                 try {
-                    _broadcast.detail = JSON.parse(unencryptedData);
+                    _broadcast.detail = JSON.parse(decrypt(encryptedData, encryptionKey));
                 }
-                catch(err) {
-                    warn('Unable to decrypt eventData');
+                catch (err) {
                     _broadcast.detail = null;
+                    log('Failed to decrypt event data');
                 }
             }
 
