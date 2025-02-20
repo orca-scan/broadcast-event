@@ -92,7 +92,7 @@ broadcastEvent('my:event', { firstName: 'Micky', lastName: 'Mouse' }, { encrypt:
 
 ### Debugging
 
-To debug issues broadcasting events pass `{ debug: true }` as the event options:
+To debug issues broadcasting events pass `{ debug: true }` as an event option:
 
 ```js
 broadcastEvent('my:event', { firstName: 'Micky', lastName: 'Mouse' }, { debug: true });
