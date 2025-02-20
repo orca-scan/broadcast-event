@@ -43,7 +43,7 @@ broadcastEvent('my:event', { firstName: 'Micky', lastName: 'Mouse' });
 
 ### Recieve an event
 
-From within any page/iframe, listen for an event as normal:
+From within any page/iframe using the standard `window.addEventListener`:
 
 ```js
 window.addEventListener('my:event', function(e) {
