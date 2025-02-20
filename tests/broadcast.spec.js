@@ -1,7 +1,6 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 const helpers = require('./helpers.js');
-const exp = require('constants');
 
 describe('broadcast-event', function() {
 
@@ -43,6 +42,23 @@ describe('broadcast-event', function() {
                 ]
             }
         ], false);
+
+        // add jasmine helper
+        jasmine.addMatchers({
+            toStartWith: function () {
+                return {
+                    compare: function (actual, expected) {
+                        var result = {};
+                        result.pass = typeof actual === 'string' && actual.indexOf(expected) === 0;
+                        result.message = result.pass
+                            ? 'Expected "' + actual + '" not to start with "' + expected + '"'
+                            : 'Expected "' + actual + '" to start with "' + expected + '"';
+                        return result;
+                    }
+                };
+            }
+        });
+        
     });
 
     afterEach(async () => {
@@ -270,5 +286,56 @@ describe('broadcast-event', function() {
         expect(targetedEventResults[2]).toBeDefined();
         expect(targetedEventResults[2].detail._originId).toEqual(parentOriginId);
         expect(targetedEventResults[2].detail._targetId).toEqual(nestedIframeOriginId);
+    });
+
+    it('should encrypt eventData in transit', async function() {
+
+        var eventName = 'test:encrypt:' + Date.now();
+        var eventData = {
+            firstName: 'William',
+            lastName: 'Gates'
+        };
+
+        // load parent page
+        await page.goto('http://localhost/parent-with-iframe.html', { waitUntil: 'load' });
+
+        // wait for iframes to load
+        await page.waitForSelector('#iframe');
+        iframe = await (await page.$('#iframe')).contentFrame();
+        await iframe.waitForSelector('#nested-iframe');
+        nestedIframe = await (await iframe.$('#nested-iframe')).contentFrame();
+
+        // intercept postMessage on topmost page so we can inspect the payload
+        var postMessageSpy = await helpers.spyOnFunction(page, 'postMessage');
+
+        // listen for broadcasts on topmost frame
+        var eventListener = helpers.waitForEvent(iframe, eventName);
+
+        // broadcast an event from nested iframe
+        await helpers.execFunction(iframe, 'broadcastEvent', eventName, eventData, { encrypt: true });
+
+        // once handler recieved the event
+        var e = await eventListener;
+
+        // get postMessage calls
+        var postMessageCalls = await postMessageSpy.calls();
+        var numberOfPostMessageCalls = await postMessageSpy.count();
+
+        // confirm eventData was encrypted
+        expect(numberOfPostMessageCalls).toEqual(1);
+
+        var firstPostMessageCall = postMessageCalls[0];
+        var firstPostMessageParam = firstPostMessageCall[0];
+        var postMessagePayload = firstPostMessageParam._broadcast;
+
+        expect(postMessagePayload.detail).toBeDefined();
+        expect(typeof postMessagePayload.detail).toEqual('string');
+        expect(postMessagePayload.detail).toStartWith('BE:');
+
+        // confirm we got the event data as normal
+        expect(e.type).toEqual(eventName);
+        expect(e.detail._originId).toBeDefined();
+        expect(e.detail.firstName).toEqual(eventData.firstName);
+        expect(e.detail.lastName).toEqual(eventData.lastName);
     });
 });

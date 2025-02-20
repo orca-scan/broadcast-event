@@ -13,8 +13,9 @@ A simple way to fire JavaScript events across iframes.
  * @param {string} eventName - event to dispatch
  * @param {object} [eventData={}] - optional data to send
  * @param {object} [options={}] - optional options ;)
+ * @param {boolean} [options.encrypt=false] - if set, encrypts event data in transit
+ * @param {string} [options.target=e.detail._originId] - if set, sends event only to that frame
  * @param {boolean} [options.debug=false] - console log if true (default false)
- * @param {string} [options.target=e.detail._originId] - if set, send event only to that frame
  * @returns {void}
  */
 broadcastEvent(eventName, eventData, options);
@@ -83,6 +84,10 @@ window.addEventListener('my:event', function(e) {
 ```
 
 All frames participate in broadcasting events, but will not fire the event locally unless `target` equals `_originId`.
+
+### Encrypting event data
+
+`broadcastEvent` sends event data via `postMessage` to all frames it finds in the page. This could mean it sends it to an iframe injected by a third party script. To avoid revealing sensertive information, you can pass `{ encrypt: true }` as an option, eventData is then encrypted in transit and decrypted on reciept.
 
 ### Debugging
 
