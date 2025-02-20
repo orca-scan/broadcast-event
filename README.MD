@@ -35,7 +35,7 @@ Add [broadcast-event.min.js](dist/broadcast-event.min.js) to all pages you want 
 
 ### Fire an event
 
-From any page/iframe, broadcast an event to all:
+Broadcast an event to all from any page/iframe:
 
 ```js
 broadcastEvent('my:event', { firstName: 'Micky', lastName: 'Mouse' });
@@ -43,7 +43,7 @@ broadcastEvent('my:event', { firstName: 'Micky', lastName: 'Mouse' });
 
 ### Recieve an event
 
-From within any page/iframe using the standard `window.addEventListener`:
+Recieve an event from within any page/iframe using the standard `window.addEventListener`:
 
 ```js
 window.addEventListener('my:event', function(e) {
