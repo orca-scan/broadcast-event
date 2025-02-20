@@ -89,6 +89,13 @@ All frames participate in broadcasting events, but will not fire the event local
 
 `broadcastEvent` sends event data via `postMessage` to all iframes. This could mean it's sending to an iframe injected by a third party script. To avoid revealing sensertive information pass `encrypt: true` as an option, eventData is then encrypted in transit.
 
+```js
+broadcastEvent('my:event', {
+    firstName: 'Micky',
+    lastName: 'Mouse'
+}, { encrypt: true });
+```
+
 ### Debugging
 
 To debug issues broadcasting events pass `{ debug: true }` as the event options:
