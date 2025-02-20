@@ -38,10 +38,7 @@ Add [broadcast-event.min.js](dist/broadcast-event.min.js) to all pages you want 
 From any page/iframe, broadcast an event to all:
 
 ```js
-broadcastEvent('my:event', {
-    firstName: 'Micky',
-    lastName: 'Mouse'
-});
+broadcastEvent('my:event', { firstName: 'Micky', lastName: 'Mouse' });
 ```
 
 ### Recieve an event
@@ -90,10 +87,7 @@ All frames participate in broadcasting events, but will not fire the event local
 `broadcastEvent` sends event data via `postMessage` to all iframes. This could mean it's sending to an iframe injected by a third party script. To avoid revealing sensertive information pass `encrypt: true` as an option, eventData is then encrypted in transit.
 
 ```js
-broadcastEvent('my:event', {
-    firstName: 'Micky',
-    lastName: 'Mouse'
-}, { encrypt: true });
+broadcastEvent('my:event', { firstName: 'Micky', lastName: 'Mouse' }, { encrypt: true });
 ```
 
 ### Debugging
