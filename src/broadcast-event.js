@@ -69,9 +69,7 @@
 
         // if required, encrypt the payload
         if (options.encrypt) {
-            var encryptionData = JSON.stringify(eventData);
-            var encryptionKey = eventData._originId;
-            payload.detail = 'BE:' + encrypt(encryptionData, encryptionKey) + ':' + encryptionKey;
+            payload.detail = 'BE:' + encrypt(eventData, eventData._originId) + ':' + eventData._originId;
         }
     
         // we're in an iframe, send to parent
@@ -183,12 +181,15 @@
 
     /**
      * Encrypts a string using XOR + Base64 encoding.
-     * @param {string} input - The plaintext string to encrypt.
+     * @param {string|object} input - item to encrypt
      * @param {string} key - The encryption key.
      * @returns {string} - The encrypted string, Base64-encoded.
      */
     function encrypt(input, key) {
         if (!key) throw new Error('Encryption key is required');
+
+        // serialise obejcts
+        input = (typeof input === 'object') ? JSON.stringify(input) : input;
 
         var output = [];
         for (var i = 0; i < input.length; i++) {
