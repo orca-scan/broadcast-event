@@ -279,6 +279,38 @@ describe('broadcast-event', function() {
         expect(targetedEventResults[2].detail._targetId).toEqual(nestedIframeOriginId);
     });
 
+    it('should not fire event if target not found', async function() {
+
+        // load parent page
+        await page.goto('http://localhost/parent-with-iframe.html', { waitUntil: 'load' });
+
+        // wait for iframes to load
+        await page.waitForSelector('#iframe');
+        iframe = await (await page.$('#iframe')).contentFrame();
+        await iframe.waitForSelector('#nested-iframe');
+        nestedIframe = await (await iframe.$('#nested-iframe')).contentFrame();
+
+        // listen for targeted event in all frames
+        var targetedEventName = 'my:targeted:event';
+        var targetedEventListeners = Promise.all([
+            helpers.waitForEvent(page, targetedEventName, 1),
+            helpers.waitForEvent(iframe, targetedEventName, 1),
+            helpers.waitForEvent(nestedIframe, targetedEventName, 1)
+        ]);
+
+        // broadcast targeted event from top/parent
+        var options = { target: 'invalidTargetId' };
+        await helpers.execFunction(page, 'broadcastEvent', targetedEventName, undefined, options);
+
+        // wait for event handlers to comlpete
+        var targetedEventResults = await targetedEventListeners;
+
+        // confirm no events were fired as target did not match
+        expect(targetedEventResults[0]).toBeUndefined();
+        expect(targetedEventResults[1]).toBeUndefined();
+        expect(targetedEventResults[2]).toBeUndefined();
+    });
+
     it('should encrypt eventData in transit', async function() {
 
         var eventName = 'test:encrypt:' + Date.now();

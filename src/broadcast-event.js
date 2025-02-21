@@ -44,8 +44,10 @@
             eventData._originId = originId;
         }
 
-        // maintain target if set
-        eventData._targetId = eventData._targetId || options.target;
+        // set event target if provided
+        if (options.target) {
+            eventData._targetId = options.target;
+        }
 
         var payload = {
             type: eventName,
@@ -240,12 +242,9 @@
 
             // decrypt event data if encrypted
             if (typeof _broadcast.detail === 'string' && _broadcast.detail.indexOf('BE:') === 0) {
-                var parts = _broadcast.detail.split(':');
-                var encryptedData = parts[1];
-                var encryptionKey = parts[2];
-
                 try {
-                    _broadcast.detail = JSON.parse(decrypt(encryptedData, encryptionKey));
+                    var parts = _broadcast.detail.split(':');
+                    _broadcast.detail = JSON.parse(decrypt(parts[1], parts[2]));
                 }
                 catch (err) {
                     _broadcast.detail = null;
@@ -255,8 +254,7 @@
 
             var options = {
                 _eventIds: _broadcast.eventIds,
-                debug: _broadcast.debug,
-                target: _broadcast.target
+                debug: _broadcast.debug
             };
 
             broadcastEvent(_broadcast.type, _broadcast.detail, options);
