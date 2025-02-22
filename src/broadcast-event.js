@@ -222,32 +222,36 @@
 
         if (event.source === window) return;
 
-        var _broadcast = event.data && event.data._broadcast;
+        var broadcast = event.data && event.data._broadcast;
 
-        if (_broadcast && typeof _broadcast.type === 'string' && _broadcast.detail) {
+        if (broadcast && typeof broadcast.type === 'string' && broadcast.detail) {
 
-            if (_broadcast.debug) {
-                log('received "' + _broadcast.type + '"');
+            // is the event detail encrypted?
+            var encrypted = (typeof broadcast.detail === 'string' && broadcast.detail.indexOf('BE:') === 0);
+
+            if (broadcast.debug) {
+                log('received "' + broadcast.type + '"');
             }
 
-            // decrypt event data if encrypted
-            if (typeof _broadcast.detail === 'string' && _broadcast.detail.indexOf('BE:') === 0) {
+            if (encrypted) {
                 try {
-                    var parts = _broadcast.detail.split(':');
-                    _broadcast.detail = JSON.parse(decrypt(parts[1], parts[2]));
+                    // decrypt event data
+                    var parts = broadcast.detail.split(':');
+                    broadcast.detail = JSON.parse(decrypt(parts[1], parts[2]));
                 }
                 catch (err) {
-                    _broadcast.detail = null;
+                    broadcast.detail = null;
                     log('Failed to decrypt event data');
                 }
             }
 
             var options = {
-                _eventIds: _broadcast.eventIds,
-                debug: _broadcast.debug
+                _eventIds: broadcast.eventIds,
+                debug: broadcast.debug,
+                encrypt: encrypted
             };
 
-            broadcastEvent(_broadcast.type, _broadcast.detail, options);
+            broadcastEvent(broadcast.type, broadcast.detail, options);
         }
     });
 
