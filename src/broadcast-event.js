@@ -152,8 +152,9 @@
         try {
             targetWindow.postMessage({ _broadcast: payload }, '*');
         }
-        catch (e) {
+        catch (err) {
             // Ignore cross-origin frame errors
+            log('postMessage error', err);
         }
     }
 
@@ -220,39 +221,43 @@
      */
     window.addEventListener('message', function(event) {
 
+        // exit if source if self
         if (event.source === window) return;
 
-        var broadcast = event.data && event.data._broadcast;
+        // exit if it's not a valid broadcast
+        if (!event.data) return;
+        if (!event.data._broadcast) return;
+        if (!event.data._broadcast.detail) return;
+        if (typeof event.data._broadcast.type !== 'string') return;
 
-        if (broadcast && typeof broadcast.type === 'string' && broadcast.detail) {
+        var broadcast = event.data._broadcast;
 
-            // is the event detail encrypted?
-            var encrypted = (typeof broadcast.detail === 'string' && broadcast.detail.indexOf('BE:') === 0);
-
-            if (broadcast.debug) {
-                log('received "' + broadcast.type + '"');
-            }
-
-            if (encrypted) {
-                try {
-                    // decrypt event data
-                    var parts = broadcast.detail.split(':');
-                    broadcast.detail = JSON.parse(decrypt(parts[1], parts[2]));
-                }
-                catch (err) {
-                    broadcast.detail = null;
-                    log('Failed to decrypt event data');
-                }
-            }
-
-            var options = {
-                _eventIds: broadcast.eventIds,
-                debug: broadcast.debug,
-                encrypt: encrypted
-            };
-
-            broadcastEvent(broadcast.type, broadcast.detail, options);
+        if (broadcast.debug) {
+            log('received "' + broadcast.type + '"');
         }
+
+        // is the event data encrypted?
+        var encrypted = (typeof broadcast.detail === 'string' && broadcast.detail.indexOf('BE:') === 0);
+
+        if (encrypted) {
+            try {
+                // decrypt event data
+                var parts = broadcast.detail.split(':');
+                broadcast.detail = JSON.parse(decrypt(parts[1], parts[2]));
+            }
+            catch (err) {
+                broadcast.detail = null;
+                log('Failed to decrypt event data');
+            }
+        }
+
+        var options = {
+            _eventIds: broadcast.eventIds,
+            debug: broadcast.debug,
+            encrypt: encrypted
+        };
+
+        broadcastEvent(broadcast.type, broadcast.detail, options);
     });
 
     // export
