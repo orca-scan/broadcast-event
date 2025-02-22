@@ -221,7 +221,7 @@
      */
     window.addEventListener('message', function(event) {
 
-        // exit if source if self
+        // exit if source is self
         if (event.source === window) return;
 
         // exit if it's not a valid broadcast
