@@ -139,16 +139,6 @@
     }
 
     /**
-     * console.warn helper
-     * @returns {void}
-     */
-    function warn() {
-        var args = [].slice.call(arguments);
-        var params = ['broadcast-event[' + sender + ']'].concat(args);
-        console.warn.apply(console, params);
-    }
-
-    /**
      * Send an event to another window using postMessage
      * @param {Window} targetWindow - window to send message to
      * @param {object} payload - data to send
